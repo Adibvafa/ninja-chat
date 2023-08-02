@@ -4,8 +4,8 @@ import streamlit as st
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
-RECRUITER_HEAD_MAX_TOKENS = 1200
-RECRUITER_MAX_TOKENS = 400
+RECRUITER_HEAD_MAX_TOKENS = 1500
+RECRUITER_MAX_TOKENS = 500
 
 def user_said(content, history):
     history.append({"role":"user", "content":content})
@@ -85,10 +85,10 @@ def create_recruiters_guide(num_resumes):
     return recruiters_guide
 
 def ask_head_recruiter(question, recruiters_guide, recruiters_response):
-    # recruiters_guide = {0: ['0', '1', '2'], 1: ['3', '4']}
-    # recruiters_response = {0: 'Hello', 1: 'Welcome'}
-
-    system = f'Act as a the head of a committee of professional recruiters trying to answer question. Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes. Summarize relevant information from each recruiter and act as a professional recruiter to answer question. Refer to each candidate by their number and name.'
+    system = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
+             f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
+             f'Summarize relevant information from each recruiter with honesty and act as a professional recruiter' \
+             f'to answer question. Refer to each candidate by their number and name.'
 
     prompt = f'' \
              f'\nquestion: {question}'
@@ -101,8 +101,11 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response):
     return response, messages
 
 def ask_recruiter(question, resume_texts, candidates):
-    system = f'Act as a member of a committee of professional recruiters. The committee has to answer the question based on several resumes, yet you can analyze only 3 resumes. Analyze resumes of all 3 candidates line by line, answer question and explain your reason with honesty very briefly to the committee. If you cannot answer the question, return the short summarized part of resume that corresponds to that question. Refer to each candidate by their number and name. End sentences with dot'
-
+    system = f'Act as a recruiter of a committee of professional recruiters. The committee has to answer the question' \
+             f'based on several resumes, yet you can analyze only 3 of them. Analyze resumes word by word, answer question' \
+             f'and explain your reason with honesty very briefly to the committee. If you cannot answer the question,' \
+             f'return the very short part of resume that corresponds to that question. Refer to each candidate' \
+             f'by their number and name. End sentences with dot.'
     prompt = f'' \
              f'\nquestion: {question}'
     for candidate in candidates:
@@ -110,6 +113,11 @@ def ask_recruiter(question, resume_texts, candidates):
     prompt += f'\ncommittee head:'
 
     return ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=RECRUITER_MAX_TOKENS, only_response=True)
+
+
+def get_candidate_name_email(resume):
+    prompt = f'Only fill in the blanks using information. Stop after the last blank is filled. Candidate Name: [BLANK], Email: [BLANK], information: {resume}'
+    return ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=100, only_response=True).strip()
 
 
 def preprocess_resume(pdf_path):
@@ -142,7 +150,7 @@ def main():
         resume_texts = resume_to_text(pdf_names)
         for i, resume_text in enumerate(resume_texts):
             st.write(f"Resume {i} from Candidate:")
-            st.write(resume_text[:min(resume_text.find('\n'), resume_text.find(','))].capitalize())
+            st.write(get_candidate_name_email(resume_text))
             st.write('\n')
 
     # Chat Interface
