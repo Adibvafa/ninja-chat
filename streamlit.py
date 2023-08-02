@@ -37,11 +37,11 @@ def main():
         st.subheader("Processed Resumes:")
         resume_texts = resume_to_text(pdf_names)
         for i, resume_text in enumerate(resume_texts):
-            st.write(f"Resume {i}:")
+            st.write(f"Resume {i} Header:")
             st.write(resume_text[:100])
 
     # Chat Interface
-    st.subheader("Chat Interface")
+    st.subheader("Chat!")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
