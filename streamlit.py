@@ -12,7 +12,7 @@ def assistant_said(content, history):
 
 def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=256, only_response=False):
 
-    return 'HEllo'
+    return 'HEllo', []
 
     messages = [] if new_chat else messages
     if system and new_chat:
@@ -141,8 +141,8 @@ def main():
         st.subheader("Processed Resumes:")
         resume_texts = resume_to_text(pdf_names)
         for i, resume_text in enumerate(resume_texts):
-            st.write(f"Resume {i} Header:")
-            st.write(resume_text[:resume_text.find('\n')])
+            st.write(f"Resume {i} from Candidate:")
+            st.write(resume_text[:min(resume_text.find('\n'), resume_text.find(','))].capitalize())
 
     # Chat Interface
     st.subheader("Chat!")
