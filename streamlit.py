@@ -248,7 +248,7 @@ def main():
                     with st.chat_message("user"):
                         st.markdown(prompt)
 
-                job_posting = get_job_posting(prompt)
+                    job_posting = get_job_posting(prompt)
 
                 with st.chat_message("assistant"):
                     st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
@@ -265,7 +265,7 @@ def main():
                     with st.chat_message("user"):
                         st.markdown(prompt)
 
-                messages = ninja_chat(prompt, resume_texts, messages, job_posting)
+                    messages = ninja_chat(prompt, resume_texts, messages, job_posting)
 
             ending_message = intro_message_2
 
