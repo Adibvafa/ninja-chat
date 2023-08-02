@@ -112,10 +112,6 @@ def ask_recruiter(question, resume_texts, candidates):
     return response
 
 
-def process_pdfs(uploaded_files):
-    pdf_names = [file.name for file in uploaded_files]
-    return pdf_names
-
 def preprocess_resume(pdf_path):
     with pdfplumber.open(pdf_path) as pdf:
         pdf_text = ""
@@ -134,12 +130,13 @@ def main():
 
     if uploaded_files:
         st.subheader("Uploaded PDFs:")
-        pdf_names = process_pdfs(uploaded_files)
+        pdf_names = [file.name for file in uploaded_files]
         for i, pdf_file in enumerate(uploaded_files):
             new_name = f"resume{i}.pdf"
             with open(os.path.join(".", new_name), "wb") as f:
                 f.write(pdf_file.getbuffer())
             st.write(f"Renamed to: {new_name}")
+        pdf_names = [f'resume{i}.pdf' for i in range(len(uploaded_files))]
 
         st.subheader("Processed Resumes:")
         resume_texts = resume_to_text(pdf_names)
@@ -149,7 +146,7 @@ def main():
 
     # Chat Interface
     st.subheader("Chat!")
-    intro_message = "Hello! I am Chat-Ninja and will assist you with analyzing resumes. Resumes will be presented to AI recruiters in chunks of 4, each recruited will express their analysis and the head of the recruiters will present you the final answer!"
+    intro_message = "Hello! I am Chat-Ninja and will assist you with analyzing resumes. Resumes will be presented to AI recruiters in chunks of 3, and each recruiter will express their analysis. Then, head of the recruiters will present you a final answer!"
 
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "assistant", "content": intro_message}]
