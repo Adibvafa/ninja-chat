@@ -45,7 +45,7 @@ def foo(question, resume_texts):
 
     for recruiter in recruiters_guide:
         response = ask_recruiter(question, resume_texts, recruiters_guide[recruiter])
-        response = f'Recruiter {recruiter} analyzing resumes {", ".join(recruiters_guide[recruiter])}:\n\n' + response
+        response = f'Recruiter {recruiter}, Analyzing Candidates {", ".join(recruiters_guide[recruiter])}:\n\n' + response
 
         with st.chat_message("assistant"):
             st.markdown(response)
@@ -55,7 +55,7 @@ def foo(question, resume_texts):
 
 
     response, messages = ask_head_recruiter(question, recruiters_guide, recruiters_response)
-    response = f'Head Recruiter:\n\n' + response
+    response = f'Head Recruiter, Analyzing All Recruiters:\n\n' + response
 
     with st.chat_message("assistant"):
         st.markdown(response)
@@ -142,7 +142,8 @@ def main():
         resume_texts = resume_to_text(pdf_names)
         for i, resume_text in enumerate(resume_texts):
             st.write(f"Resume {i} from Candidate:")
-            st.write(resume_text[:min(resume_text.find('\n'), resume_text.find(','))].capitalize() + '\n')
+            st.write(resume_text[:min(resume_text.find('\n'), resume_text.find(','))].capitalize())
+            st.write('\n')
 
     # Chat Interface
     st.subheader("Chat!")
