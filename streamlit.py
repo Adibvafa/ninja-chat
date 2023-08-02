@@ -29,7 +29,7 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     if system and new_chat:
         messages.append({"role":"system", "content":system})
 
-    user_said(user_content, messages)
+    # user_said(user_content, messages)
 
     response = openai.ChatCompletion.create(
       model="gpt-3.5-turbo",
@@ -167,7 +167,7 @@ def ask_recruiter(question, resume_texts, candidates, job_posting):
 
 def get_candidate_name_email(resume):
     prompt = f'resume: {resume}. Only fill in the blanks using the scrapped beginning of resume. Stop after the last blank is filled. Candidate Name: [BLANK], Email: [BLANK]'
-    response =  ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=60, only_response=True).strip()
+    response = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=60, only_response=True).strip()
     return [elem.split(':')[-1].strip() for elem in response.split(',')]
 
 
