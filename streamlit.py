@@ -116,8 +116,8 @@ def ask_recruiter(question, resume_texts, candidates):
 
 
 def get_candidate_name_email(resume):
-    prompt = f'Only fill in the blanks using information. Stop after the last blank is filled. Candidate Name: [BLANK], Email: [BLANK], information: {resume}'
-    return ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=100, only_response=True).strip()
+    prompt = f'resume: {resume}. Only fill in the blanks using the scrapped beginning of resume. Stop after the last blank is filled. Candidate Name: [BLANK], Email: [BLANK]'
+    return ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=60, only_response=True).strip()
 
 
 def preprocess_resume(pdf_path):
