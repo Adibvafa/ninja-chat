@@ -239,7 +239,17 @@ def main():
         if prompt in ('Q', 'I', 'C', 'J'):
 
             if prompt == 'J':
+                with st.chat_message("assistant"):
+                    st.markdown("Sure! Send me the job posting.")
+                st.session_state.messages.append({"role": "assistant", "content": "Sure! Send me the job posting."})
+
+                if prompt := st.chat_input("Job Posting..."):
+                    st.session_state.messages.append({"role": "user", "content": prompt})
+                    with st.chat_message("user"):
+                        st.markdown(prompt)
+
                 job_posting = get_job_posting(prompt)
+
                 with st.chat_message("assistant"):
                     st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
                 st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
@@ -252,7 +262,6 @@ def main():
 
                 if prompt := st.chat_input("Type your question..."):
                     st.session_state.messages.append({"role": "user", "content": prompt})
-
                     with st.chat_message("user"):
                         st.markdown(prompt)
 
