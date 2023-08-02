@@ -216,7 +216,7 @@ def main():
     # Chat Interface
     st.subheader("Chat Interface")
     intro_message = "Hello! My name is Chat-Ninja and I'll assist you with analyzing resumes. Your uploaded resumes will be presented to AI recruiter teams in groups of 3, and each recruiter will express their analysis. Then, the head of recruiters will present you a final answer!"
-    intro_message_2 = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\nTo send calendar invitation, type 'C'\nTo enter a job posting, type 'J'"""
+    intro_message_2 = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
 
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "assistant", "content": intro_message + '\n\n' + intro_message_2}]
@@ -248,6 +248,12 @@ def main():
                 with st.chat_message("assistant"):
                     st.markdown("Sure! I will try my best to answer your question.")
                 st.session_state.messages.append({"role": "assistant", "content": "Sure! I will try my best to answer your question."})
+
+                if prompt := st.chat_input("Type your question..."):
+                    st.session_state.messages.append({"role": "user", "content": prompt})
+
+                    with st.chat_message("user"):
+                        st.markdown(prompt)
 
                 messages = ninja_chat(prompt, resume_texts, messages, job_posting)
 
