@@ -142,7 +142,7 @@ def main():
         resume_texts = resume_to_text(pdf_names)
         for i, resume_text in enumerate(resume_texts):
             st.write(f"Resume {i} Header:")
-            st.write(resume_text[resume_text.find('\n')])
+            st.write(resume_text[:resume_text.find('\n')])
 
     # Chat Interface
     st.subheader("Chat!")
