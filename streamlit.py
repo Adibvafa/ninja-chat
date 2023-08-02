@@ -39,7 +39,7 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     return response, messages
 
 
-def foo(question, resume_texts):
+def ninja_chat(question, resume_texts):
     recruiters_guide = create_recruiters_guide(len(resume_texts))
     recruiters_response = {}
 
@@ -162,12 +162,14 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        assistant_response = foo(prompt, resume_texts)
+        ninja_chat(prompt, resume_texts)
+
+        ending_message = 'Is there any other question I can help you with?'
 
         with st.chat_message("assistant"):
-            st.markdown(assistant_response)
+            st.markdown(ending_message)
 
-        st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+        st.session_state.messages.append({"role": "assistant", "content": ending_message})
 
 
 if __name__ == '__main__':
