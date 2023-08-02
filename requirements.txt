@@ -2,3 +2,4 @@ openai
 pdfplumber
 streamlit
 dotenv
+toml

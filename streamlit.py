@@ -1,5 +1,9 @@
-import openai, os, pdfplumber
+import openai, os, pdfplumber, toml
 import streamlit as st
+
+secrets = toml.load("secrets.toml")
+openai.api_key = secrets["OPENAI_API_KEY"]
+
 
 RECRUITER_HEAD_MAX_TOKENS = 1200
 RECRUITER_MAX_TOKENS = 400
@@ -11,8 +15,6 @@ def assistant_said(content, history):
     history.append({"role":"assistant", "content":content})
 
 def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=256, only_response=False):
-
-    return 'awiehuiwaugb', []
 
     messages = [] if new_chat else messages
     if system and new_chat:
