@@ -2,8 +2,8 @@ import openai, os, pdfplumber
 import streamlit as st
 
 
-def foo(prompt):
-    return f"hello {prompt}"
+def foo(prompt, resume_texts):
+    return f"hello {prompt}\n{resume_texts[0][:100]}"
 
 def process_pdfs(uploaded_files):
     pdf_names = [file.name for file in uploaded_files]
@@ -29,11 +29,18 @@ def main():
         st.subheader("Uploaded PDFs:")
         pdf_names = process_pdfs(uploaded_files)
         for i, pdf_file in enumerate(uploaded_files):
-            # Rename the uploaded PDF files to 'resume0', 'resume1', etc.
             new_name = f"resume{i}.pdf"
             with open(os.path.join(".", new_name), "wb") as f:
                 f.write(pdf_file.getbuffer())
             st.write(f"Renamed to: {new_name}")
+
+
+    if uploaded_files:
+        st.subheader("Processed Resumes:")
+        resume_texts = resume_to_text(pdf_names)
+        for i, resume_text in enumerate(resume_texts):
+            st.write(f"Resume {i}:")
+            st.write(resume_text)
 
     # Chat Interface
     st.subheader("Chat Interface")
@@ -52,20 +59,13 @@ def main():
             st.markdown(prompt)
 
         # The Assistant's response is now always "hello"
-        assistant_response = "hello"
+        assistant_response = foo(prompt, resume_texts)
 
         with st.chat_message("assistant"):
             st.markdown(assistant_response)
 
         st.session_state.messages.append({"role": "assistant", "content": assistant_response})
 
-    # Process Resumes
-    if uploaded_files:
-        st.subheader("Processed Resumes:")
-        resume_texts = resume_to_text(pdf_names)
-        for i, resume_text in enumerate(resume_texts):
-            st.write(f"Resume {i}:")
-            st.write(resume_text)
 
 if __name__ == '__main__':
     main()
