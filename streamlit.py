@@ -2,25 +2,34 @@ import openai
 import streamlit as st
 
 
-st.title("Let's Talk!")
+def foo(prompt):
+    return f"hello {prompt}"
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+def main():
+    st.title("Ninja Chat! Let's Discuss Resumes")
 
-if prompt := st.chat_input("What is up?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-    # The Assistant's response is now always "hello"
-    assistant_response = "hello"
+    if prompt := st.chat_input("Ask any question!"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
 
-    with st.chat_message("assistant"):
-        st.markdown(assistant_response)
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-    st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+        # The Assistant's response is now always "hello"
+        assistant_response = foo(prompt)
+
+        with st.chat_message("assistant"):
+            st.markdown(assistant_response)
+
+        st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+
+
+if __name__ == '__main__':
+    main()
