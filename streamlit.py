@@ -215,7 +215,7 @@ def main():
 
 
     # Chat Interface
-    st.subheader("Chat Interface")
+    st.subheader("Let's Chat!")
     intro_message = "Hello! My name is Chat-Ninja and I'll assist you with analyzing resumes. Your uploaded resumes will be presented to AI recruiter teams in groups of 3, and each recruiter will express their analysis. Then, the head of recruiters will present you a final answer!"
     intro_message_2 = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
 
@@ -229,7 +229,7 @@ def main():
     messages = []
     job_posting = ''
 
-    if prompt := st.chat_input("Type your question..."):
+    if prompt := st.chat_input("Type Q, I, C, or J"):
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         with st.chat_message("user"):
