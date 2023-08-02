@@ -109,8 +109,7 @@ def ask_recruiter(question, resume_texts, candidates):
         prompt += f'\ncandidate{candidate}: {resume_texts[int(candidate)]}'
     prompt += f'\ncommittee head:'
 
-    response, _ = ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=RECRUITER_MAX_TOKENS, only_response=True)
-    return response
+    return ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=RECRUITER_MAX_TOKENS, only_response=True)
 
 
 def preprocess_resume(pdf_path):
