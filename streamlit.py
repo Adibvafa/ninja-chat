@@ -254,24 +254,33 @@ def main():
                     st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
                 st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
 
-
-
             elif prompt == 'Q':
 
                 with st.chat_message("assistant"):
                     st.markdown("Sure! I will try my best to answer your question.")
+
                 st.session_state.messages.append(
+
                     {"role": "assistant", "content": "Sure! I will try my best to answer your question."})
 
+                # Wait for the user to input their question
+
                 while True:
-                    user_input = st.chat_input()
+
+                    user_input = st.chat_input(key=hash("Question"))
 
                     if user_input:
+
                         st.session_state.messages.append({"role": "user", "content": user_input})
+
                         with st.chat_message("user"):
+
                             st.markdown(user_input)
 
+                        # Now we have the user's question, and we can proceed with Chat-Ninja's response.
+
                         messages = ninja_chat(user_input, resume_texts, messages, job_posting)
+
                         break
 
             ending_message = intro_message_2
