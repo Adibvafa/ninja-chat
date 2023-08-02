@@ -228,14 +228,19 @@ def main():
 
     messages = []
     job_posting = ''
+    ending_message = intro_message_2
 
-    if prompt := st.chat_input("Type Q, I, C, or J"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    # Create a form for user interaction
+    with st.form("User Interaction"):
+        user_prompt = st.text_input("Type Q, I, C, or J", key=hash("User Prompt"))
+        submit_button = st.form_submit_button(label="Submit")
 
+    if submit_button and user_prompt:
+        st.session_state.messages.append({"role": "user", "content": user_prompt})
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.markdown(user_prompt)
 
-        prompt = prompt.strip().upper()
+        prompt = user_prompt.strip().upper()
         if prompt in ('Q', 'I', 'C', 'J'):
 
             if prompt == 'J':
@@ -243,47 +248,41 @@ def main():
                     st.markdown("Sure! Send me the job posting.")
                 st.session_state.messages.append({"role": "assistant", "content": "Sure! Send me the job posting."})
 
-                if prompt := st.chat_input("Job Posting..."):
-                    st.session_state.messages.append({"role": "user", "content": prompt})
+                # Create another form for capturing the job posting
+                with st.form("Job Posting Form"):
+                    job_posting_input = st.text_area("Job Posting...", key=hash("Job Posting Input"))
+                    job_posting_submit_button = st.form_submit_button(label="Submit")
+
+                if job_posting_submit_button and job_posting_input:
+                    st.session_state.messages.append({"role": "user", "content": job_posting_input})
                     with st.chat_message("user"):
-                        st.markdown(prompt)
+                        st.markdown(job_posting_input)
 
-                    job_posting = get_job_posting(prompt)
+                    job_posting = get_job_posting(job_posting_input)
 
-                with st.chat_message("assistant"):
-                    st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
-                st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
+                    with st.chat_message("assistant"):
+                        st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
+                    st.session_state.messages.append(
+                        {"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
 
             elif prompt == 'Q':
-
                 with st.chat_message("assistant"):
                     st.markdown("Sure! I will try my best to answer your question.")
-
                 st.session_state.messages.append(
-
                     {"role": "assistant", "content": "Sure! I will try my best to answer your question."})
 
-                # Wait for the user to input their question
+                # Create another form for capturing the user's question
+                with st.form("User Question Form"):
+                    user_question_input = st.text_input("Type your question...", key=hash("User Question Input"))
+                    user_question_submit_button = st.form_submit_button(label="Submit")
 
-                while True:
+                if user_question_submit_button and user_question_input:
+                    st.session_state.messages.append({"role": "user", "content": user_question_input})
+                    with st.chat_message("user"):
+                        st.markdown(user_question_input)
 
-                    user_input = st.chat_input(key=hash("Question"))
-
-                    if user_input:
-
-                        st.session_state.messages.append({"role": "user", "content": user_input})
-
-                        with st.chat_message("user"):
-
-                            st.markdown(user_input)
-
-                        # Now we have the user's question, and we can proceed with Chat-Ninja's response.
-
-                        messages = ninja_chat(user_input, resume_texts, messages, job_posting)
-
-                        break
-
-            ending_message = intro_message_2
+                    # Now we have the user's question, and we can proceed with Chat-Ninja's response.
+                    messages = ninja_chat(user_question_input, resume_texts, messages, job_posting)
 
             with st.chat_message("assistant"):
                 st.markdown(ending_message)
@@ -294,6 +293,66 @@ def main():
             with st.chat_message("assistant"):
                 st.markdown(reset_prompt_message)
             st.session_state.messages.append({"role": "assistant", "content": reset_prompt_message})
+
+    # messages = []
+    # job_posting = ''
+    #
+    # if prompt := st.chat_input("Type Q, I, C, or J"):
+    #     st.session_state.messages.append({"role": "user", "content": prompt})
+    #
+    #     with st.chat_message("user"):
+    #         st.markdown(prompt)
+    #
+    #     prompt = prompt.strip().upper()
+    #     if prompt in ('Q', 'I', 'C', 'J'):
+    #
+    #         if prompt == 'J':
+    #             with st.chat_message("assistant"):
+    #                 st.markdown("Sure! Send me the job posting.")
+    #             st.session_state.messages.append({"role": "assistant", "content": "Sure! Send me the job posting."})
+    #
+    #             if prompt := st.chat_input("Job Posting..."):
+    #                 st.session_state.messages.append({"role": "user", "content": prompt})
+    #                 with st.chat_message("user"):
+    #                     st.markdown(prompt)
+    #
+    #                 job_posting = get_job_posting(prompt)
+    #
+    #             with st.chat_message("assistant"):
+    #                 st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
+    #             st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
+    #
+    #
+    #
+    #         elif prompt == 'Q':
+    #
+    #             with st.chat_message("assistant"):
+    #                 st.markdown("Sure! I will try my best to answer your question.")
+    #             st.session_state.messages.append(
+    #                 {"role": "assistant", "content": "Sure! I will try my best to answer your question."})
+    #
+    #             while True:
+    #                 user_input = st.chat_input()
+    #
+    #                 if user_input:
+    #                     st.session_state.messages.append({"role": "user", "content": user_input})
+    #                     with st.chat_message("user"):
+    #                         st.markdown(user_input)
+    #
+    #                     messages = ninja_chat(user_input, resume_texts, messages, job_posting)
+    #                     break
+    #
+    #         ending_message = intro_message_2
+    #
+    #         with st.chat_message("assistant"):
+    #             st.markdown(ending_message)
+    #         st.session_state.messages.append({"role": "assistant", "content": ending_message})
+    #
+    #     else:
+    #         reset_prompt_message = "Please only send Q, I, C, or J."
+    #         with st.chat_message("assistant"):
+    #             st.markdown(reset_prompt_message)
+    #         st.session_state.messages.append({"role": "assistant", "content": reset_prompt_message})
 
 
 if __name__ == '__main__':
