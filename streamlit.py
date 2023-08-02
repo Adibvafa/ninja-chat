@@ -143,19 +143,19 @@ def main():
             new_name = f"resume{i}.pdf"
             with open(os.path.join(".", new_name), "wb") as f:
                 f.write(pdf_file.getbuffer())
-            st.write(f"Renamed to: {new_name}")
+            st.write(f"Renamed To: {new_name}")
         pdf_names = [f'resume{i}.pdf' for i in range(len(uploaded_files))]
 
         st.subheader("Processed Resumes:")
         resume_texts = resume_to_text(pdf_names)
         for i, resume_text in enumerate(resume_texts):
-            st.write(f"Resume {i} from Candidate:")
+            st.write(f"Resume {i} From Candidate:")
             st.write(get_candidate_name_email(resume_text[:200]))
             st.write('\n')
 
     # Chat Interface
-    st.subheader("Chat!")
-    intro_message = "Hello! I am Chat-Ninja and will assist you with analyzing resumes. Resumes will be presented to AI recruiters in chunks of 3, and each recruiter will express their analysis. Then, head of the recruiters will present you a final answer!"
+    st.subheader("Chat Interface")
+    intro_message = "Hello! My name is Chat-Ninja and I'll assist you with analyzing resumes. Your uploaded resumes will be presented to AI recruiter teams in groups of 3, and each recruiter will express their analysis. Then, the head of recruiters will present you a final answer!"
 
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "assistant", "content": intro_message}]
