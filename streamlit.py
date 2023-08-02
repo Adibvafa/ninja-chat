@@ -29,7 +29,7 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     if system and new_chat:
         messages.append({"role":"system", "content":system})
 
-    # user_said(user_content, messages)
+    user_said(user_content, messages)
 
     response = openai.ChatCompletion.create(
       model="gpt-3.5-turbo",
@@ -143,7 +143,8 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response, messages
 
     messages = polish_messages(messages)
 
-    response, messages = ask_chatgpt(prompt, messages=messages, system=system, new_chat=False, max_tokens=RECRUITER_HEAD_MAX_TOKENS)
+    response, messages = ask_chatgpt(prompt, messages=messages, system=system, new_chat=False, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
+    del messages[-1]
     return response, messages
 
 def ask_recruiter(question, resume_texts, candidates, job_posting):
