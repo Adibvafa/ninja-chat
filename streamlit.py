@@ -59,6 +59,9 @@ def ninja_chat(prev_input, user_input, resume_texts, messages, job_posting):
     if prev_input[0].strip().upper() == 'Q':
         return '', answer_resume_question(user_input, resume_texts, messages, job_posting)
 
+    if prev_input[0] == 'N':
+        return 'N', []
+
     return 'ERRROROROR', []
 
 
