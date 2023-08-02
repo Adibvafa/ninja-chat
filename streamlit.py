@@ -17,8 +17,8 @@ def main():
     if uploaded_files:
         st.subheader("Uploaded PDFs:")
         pdf_names = process_pdfs(uploaded_files)
-        for pdf_name in pdf_names:
-            st.write(pdf_name)
+        print(pdf_names)
+
 
     st.subheader("Chat Interface")
 
