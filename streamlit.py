@@ -58,6 +58,8 @@ def ninja_chat(prev_input, user_input, resume_texts, messages, job_posting):
     if prev_input.strip().upper() == 'Q':
         return '', answer_resume_question(user_input, resume_texts, messages, job_posting)
 
+    return 'ERRROROROR', []
+
 
 
 
@@ -255,12 +257,10 @@ def main():
                 st.markdown(ninja)
             st.session_state.messages.append({"role": "assistant", "content": ninja})
 
-        ending_message = 'Is there any other question I can help you with?'
-
-        with st.chat_message("assistant"):
-            st.markdown(ending_message)
-
-        st.session_state.messages.append({"role": "assistant", "content": ending_message})
+        # ending_message = 'Is there any other question I can help you with?'
+        # with st.chat_message("assistant"):
+        #     st.markdown(ending_message)
+        # st.session_state.messages.append({"role": "assistant", "content": ending_message})
 
 
 if __name__ == '__main__':
