@@ -1,19 +1,29 @@
-import openai, os, pdfplumber, toml
+import openai, os, pdfplumber, toml, tiktoken
 import streamlit as st
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
 RECRUITER_HEAD_MAX_TOKENS = 1500
-RECRUITER_MAX_TOKENS = 500
+RECRUITER_MAX_TOKENS = 450
+ASSISTANT_SUMMARY_MAX_TOKENS = 350
+USER_SUMMARY_MAX_TOKENS = 150
 
-def user_said(content, history):
-    history.append({"role":"user", "content":content})
+def user_said(content, history, summarize=True):
+    if summarize:
+        prompt = f'question: {content}. Your task is to summarize the user asked question without answering it so the summary can be saved in chat history. brief question of user, followed by summary of any relevant information: '
+        content = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=USER_SUMMARY_MAX_TOKENS,
+                              only_response=True, temp=0)
+    history.append({"role": "user", "content": content})
 
-def assistant_said(content, history):
+def assistant_said(content, history, summarize=False):
+    if summarize:
+        prompt = f'{content}. In very brief summary: '
+        content = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=ASSISTANT_SUMMARY_MAX_TOKENS,
+                    only_response=True, temp=0.1)
     history.append({"role":"assistant", "content":content})
 
-def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=256, only_response=False):
+def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=256, only_response=False, temp=0.0):
 
     messages = [] if new_chat else messages
     if system and new_chat:
@@ -24,7 +34,7 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     response = openai.ChatCompletion.create(
       model="gpt-3.5-turbo",
       messages=messages,
-      temperature=0,
+      temperature=temp,
       max_tokens=max_tokens,
       top_p=1,
       frequency_penalty=0,
@@ -35,17 +45,17 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     if only_response:
         return response
 
-    assistant_said(response, messages)
+    # assistant_said(response, messages)
 
     return response, messages
 
 
-def ninja_chat(question, resume_texts):
+def ninja_chat(question, resume_texts, messages, job_posting):
     recruiters_guide = create_recruiters_guide(len(resume_texts))
     recruiters_response = {}
 
     for recruiter in recruiters_guide:
-        response = ask_recruiter(question, resume_texts, recruiters_guide[recruiter])
+        response = ask_recruiter(question, resume_texts, recruiters_guide[recruiter], job_posting)
         response = f'Recruiter {recruiter}, Analyzing Candidates {", ".join(recruiters_guide[recruiter])}:\n\n' + response
 
         with st.chat_message("assistant"):
@@ -55,13 +65,17 @@ def ninja_chat(question, resume_texts):
         recruiters_response[recruiter] = response
 
 
-    response, messages = ask_head_recruiter(question, recruiters_guide, recruiters_response)
+    response, messages = ask_head_recruiter(question, recruiters_guide, recruiters_response, messages, job_posting)
     response = f'Head Recruiter, Analyzing All Recruiters:\n\n' + response
 
     with st.chat_message("assistant"):
         st.markdown(response)
-
     st.session_state.messages.append({"role": "assistant", "content": response})
+
+    user_said(question, messages, summarize=True)
+    assistant_said(response, messages, summarize=True)
+
+    return messages
 
 
 def create_recruiters_guide(num_resumes):
@@ -84,7 +98,32 @@ def create_recruiters_guide(num_resumes):
 
     return recruiters_guide
 
-def ask_head_recruiter(question, recruiters_guide, recruiters_response):
+
+
+def token_counter(messages):
+    encoding = tiktoken.get_encoding("cl100k_base")
+    num_tokens = 0
+    for message in messages:
+        num_tokens += 4
+        for key, value in message.items():
+            num_tokens += len(encoding.encode(value))
+            if key == "name":
+                num_tokens += -1
+    num_tokens += 2
+    return num_tokens
+
+def polish_messages(messages):
+
+    conv_history_tokens = token_counter(messages)
+
+    while conv_history_tokens >= 4096:
+        del messages[1]
+        conv_history_tokens = token_counter(messages)
+
+    return messages
+
+
+def ask_head_recruiter(question, recruiters_guide, recruiters_response, messages, job_posting):
     system = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
              f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
              f'Summarize relevant information from each recruiter with honesty and act as a professional recruiter' \
@@ -92,15 +131,22 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response):
 
     prompt = f'' \
              f'\nquestion: {question}'
+
+    if job_posting:
+        prompt = prompt + f'\njob posting: {job_posting}'
+
+
     for i in range(len(recruiters_guide)):
         candidates = ', '.join(recruiters_guide[i])
         prompt += f'\nrecruiter{i} analyzing candidates {candidates}: {recruiters_response[i]}'
     prompt += f'\ncommittee head:'
 
-    response, messages = ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=RECRUITER_HEAD_MAX_TOKENS)
+    messages = polish_messages(messages)
+
+    response, messages = ask_chatgpt(prompt, messages=messages, system=system, new_chat=False, max_tokens=RECRUITER_HEAD_MAX_TOKENS)
     return response, messages
 
-def ask_recruiter(question, resume_texts, candidates):
+def ask_recruiter(question, resume_texts, candidates, job_posting):
     system = f'Act as a recruiter of a committee of professional recruiters. The committee has to answer the question' \
              f'based on several resumes, yet you can analyze only 3 of them. Analyze resumes word by word, answer question' \
              f'and explain your reason with honesty very briefly to the committee. If you cannot answer the question,' \
@@ -108,16 +154,26 @@ def ask_recruiter(question, resume_texts, candidates):
              f'by their number and name. End sentences with dot.'
     prompt = f'' \
              f'\nquestion: {question}'
+
+    if job_posting:
+        prompt = prompt + f'\njob posting: {job_posting}'
+
     for candidate in candidates:
         prompt += f'\ncandidate{candidate}: {resume_texts[int(candidate)]}'
     prompt += f'\ncommittee head:'
 
-    return ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=RECRUITER_MAX_TOKENS, only_response=True)
+    return ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=RECRUITER_MAX_TOKENS, only_response=True, temp=0.2)
 
 
 def get_candidate_name_email(resume):
     prompt = f'resume: {resume}. Only fill in the blanks using the scrapped beginning of resume. Stop after the last blank is filled. Candidate Name: [BLANK], Email: [BLANK]'
-    return ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=60, only_response=True).strip()
+    response =  ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=60, only_response=True).strip()
+    return [elem.split(':')[-1].strip() for elem in response.split(',')]
+
+
+def get_job_posting(raw_posting):
+    prompt = f'Act as a professional recruiter. Summarize the most important information of the job posting: {raw_posting}'
+    return ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=500, only_response=True, temp=0)
 
 
 def preprocess_resume(pdf_path):
@@ -148,21 +204,29 @@ def main():
 
         st.subheader("Processed Resumes:")
         resume_texts = resume_to_text(pdf_names)
+
+        candidates_info = {}
         for i, resume_text in enumerate(resume_texts):
-            st.write(f"Resume {i} From Candidate:")
-            st.write(get_candidate_name_email(resume_text[:200]))
-            st.write('\n')
+            st.write(f"Resume {i} From:")
+            name, email = get_candidate_name_email(resume_text[:200])
+            candidates_info[i] = [name, email]
+            st.write(f'Name: {name}; Email: {email}\n')
+
 
     # Chat Interface
     st.subheader("Chat Interface")
     intro_message = "Hello! My name is Chat-Ninja and I'll assist you with analyzing resumes. Your uploaded resumes will be presented to AI recruiter teams in groups of 3, and each recruiter will express their analysis. Then, the head of recruiters will present you a final answer!"
+    intro_message_2 = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\nTo send calendar invitation, type 'C'\nTo enter a job posting, type 'J'"""
 
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": intro_message}]
+        st.session_state.messages = [{"role": "assistant", "content": intro_message + '\n\n' + intro_message_2}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+
+    messages = []
+    job_posting = ''
 
     if prompt := st.chat_input("Type your question..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -170,14 +234,34 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        ninja_chat(prompt, resume_texts)
+        prompt = prompt.strip().upper()
+        if prompt in ('Q', 'I', 'C', 'J'):
 
-        ending_message = 'Is there any other question I can help you with?'
+            if prompt == 'J':
+                job_posting = get_job_posting(prompt)
+                with st.chat_message("assistant"):
+                    st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
+                st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
 
-        with st.chat_message("assistant"):
-            st.markdown(ending_message)
 
-        st.session_state.messages.append({"role": "assistant", "content": ending_message})
+            elif prompt == 'Q':
+                with st.chat_message("assistant"):
+                    st.markdown("Sure! I will try my best to answer your question.")
+                st.session_state.messages.append({"role": "assistant", "content": "Sure! I will try my best to answer your question."})
+
+                messages = ninja_chat(prompt, resume_texts, messages, job_posting)
+
+            ending_message = intro_message_2
+
+            with st.chat_message("assistant"):
+                st.markdown(ending_message)
+            st.session_state.messages.append({"role": "assistant", "content": ending_message})
+
+        else:
+            reset_prompt_message = "Please only send Q, I, C, or J."
+            with st.chat_message("assistant"):
+                st.markdown(reset_prompt_message)
+            st.session_state.messages.append({"role": "assistant", "content": reset_prompt_message})
 
 
 if __name__ == '__main__':
