@@ -243,6 +243,9 @@ def main():
                     st.markdown("Sure! Send me the job posting.")
                 st.session_state.messages.append({"role": "assistant", "content": "Sure! Send me the job posting."})
 
+                while prompt == 'J':
+                    prompt = st.chat_input("Job Posting...")
+
                 if prompt := st.chat_input("Job Posting..."):
                     st.session_state.messages.append({"role": "user", "content": prompt})
                     with st.chat_message("user"):
