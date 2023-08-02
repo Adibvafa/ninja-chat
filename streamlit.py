@@ -249,9 +249,9 @@ def main():
                         st.markdown(prompt)
                         job_posting = get_job_posting(prompt)
 
-                with st.chat_message("assistant"):
-                    st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
-                st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
+                        with st.chat_message("assistant"):
+                            st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
+                        st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
 
 
 
