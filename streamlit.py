@@ -34,13 +34,11 @@ def main():
                 f.write(pdf_file.getbuffer())
             st.write(f"Renamed to: {new_name}")
 
-
-    if uploaded_files:
         st.subheader("Processed Resumes:")
         resume_texts = resume_to_text(pdf_names)
         for i, resume_text in enumerate(resume_texts):
             st.write(f"Resume {i}:")
-            st.write(resume_text)
+            st.write(resume_text[:100])
 
     # Chat Interface
     st.subheader("Chat Interface")
