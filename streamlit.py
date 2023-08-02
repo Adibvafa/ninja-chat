@@ -243,10 +243,8 @@ def main():
                     st.markdown("Sure! Send me the job posting.")
                 st.session_state.messages.append({"role": "assistant", "content": "Sure! Send me the job posting."})
 
-                while not prompt or prompt == 'J':
-                    prompt = st.chat_input("Job Posting...", key=hash("J"))
 
-                if prompt := st.chat_input("Job Posting...", key=hash("J2")):
+                if prompt := st.chat_input("Job Posting...", key=hash("J")):
                     st.session_state.messages.append({"role": "user", "content": prompt})
                     with st.chat_message("user"):
                         st.markdown(prompt)
