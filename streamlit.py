@@ -255,17 +255,24 @@ def main():
                 st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
 
 
+
             elif prompt == 'Q':
+
                 with st.chat_message("assistant"):
                     st.markdown("Sure! I will try my best to answer your question.")
-                st.session_state.messages.append({"role": "assistant", "content": "Sure! I will try my best to answer your question."})
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": "Sure! I will try my best to answer your question."})
 
-                if prompt := st.chat_input("Type your question..."):
-                    st.session_state.messages.append({"role": "user", "content": prompt})
-                    with st.chat_message("user"):
-                        st.markdown(prompt)
+                while True:
+                    user_input = st.chat_input()
 
-                    messages = ninja_chat(prompt, resume_texts, messages, job_posting)
+                    if user_input:
+                        st.session_state.messages.append({"role": "user", "content": user_input})
+                        with st.chat_message("user"):
+                            st.markdown(user_input)
+
+                        messages = ninja_chat(user_input, resume_texts, messages, job_posting)
+                        break
 
             ending_message = intro_message_2
 
