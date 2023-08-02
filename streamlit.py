@@ -254,8 +254,7 @@ def main():
 
                     with st.chat_message("assistant"):
                         st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting_summary}")
-                    st.session_state.messages.append({"role": "assistant",
-                                                      "content": f"Job Posting Analyzed! Here is the summary: {job_posting_summary}"})
+                    st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting_summary}"})
 
 
                 # if prompt := st.chat_input("Job Posting...", key=hash("J")):
@@ -291,8 +290,8 @@ def main():
                         messages = ninja_chat(user_input, resume_texts, messages, job_posting)
                         break
 
-            ending_message = intro_message_2
-
+            # ending_message = intro_message_2
+            #
             # with st.chat_message("assistant"):
             #     st.markdown(ending_message)
             # st.session_state.messages.append({"role": "assistant", "content": ending_message})
