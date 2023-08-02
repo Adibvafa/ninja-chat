@@ -242,7 +242,7 @@ def main():
             st.markdown(message["content"])
 
 
-    prev_input = []; messages = []; job_posting = ''
+    prev_input = ['N']; messages = []; job_posting = ''
 
     if prompt := st.chat_input("Your Message..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
