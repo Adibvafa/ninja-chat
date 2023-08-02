@@ -53,9 +53,10 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
 def ninja_chat(prev_input, user_input, resume_texts, messages, job_posting):
 
     if user_input.strip().upper() == 'Q':
+        prev_input[0] = 'Q'
         return "Sure! I will try my best to answer your question.", messages
 
-    if prev_input.strip().upper() == 'Q':
+    if prev_input[0].strip().upper() == 'Q':
         return '', answer_resume_question(user_input, resume_texts, messages, job_posting)
 
     return 'ERRROROROR', []
@@ -241,7 +242,7 @@ def main():
             st.markdown(message["content"])
 
 
-    prev_input = ''; messages = []; job_posting = ''
+    prev_input = []; messages = []; job_posting = ''
 
     if prompt := st.chat_input("Your Message..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -250,7 +251,7 @@ def main():
             st.markdown(prompt)
 
         ninja, messages = ninja_chat(prev_input, prompt, resume_texts, messages, job_posting)
-        prev_input = prompt.strip().upper()
+
 
         if len(ninja) > 0:
             with st.chat_message("assistant"):
