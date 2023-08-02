@@ -1,8 +1,7 @@
 import openai, os, pdfplumber, toml
 import streamlit as st
 
-secrets = toml.load("secrets.toml")
-openai.api_key = secrets["OPENAI_API_KEY"]
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
 RECRUITER_HEAD_MAX_TOKENS = 1200
