@@ -251,7 +251,7 @@ def main():
                     with st.chat_message("user"):
                         st.markdown(job_posting_input)
 
-                    job_posting_summary = get_job_posting_summary(job_posting_input)
+                    job_posting_summary = get_job_posting(job_posting_input)
 
                     with st.chat_message("assistant"):
                         st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting_summary}")
