@@ -29,7 +29,7 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     if system and new_chat:
         messages.append({"role":"system", "content":system})
 
-    user_said(user_content, messages)
+    user_said(user_content, messages, summarize=False)
 
     response = openai.ChatCompletion.create(
       model="gpt-3.5-turbo",
