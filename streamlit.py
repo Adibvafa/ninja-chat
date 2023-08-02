@@ -243,19 +243,34 @@ def main():
                     st.markdown("Sure! Send me the job posting.")
                 st.session_state.messages.append({"role": "assistant", "content": "Sure! Send me the job posting."})
 
+                job_posting_input = st.text_area("Job Posting...")
 
-                if prompt := st.chat_input("Job Posting...", key=hash("J")):
-                    st.session_state.messages.append({"role": "user", "content": prompt})
+                # Custom button to submit the job posting
+                if st.button("Analyze Job Posting"):
+                    st.session_state.messages.append({"role": "user", "content": job_posting_input})
                     with st.chat_message("user"):
-                        st.markdown(prompt)
+                        st.markdown(job_posting_input)
 
-                    if st.button("Analyze Job Posting"):
-                        job_posting_summary = get_job_posting(prompt)
+                    job_posting_summary = get_job_posting_summary(job_posting_input)
 
-                        with st.chat_message("assistant"):
-                            st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting_summary}")
-                        st.session_state.messages.append({"role": "assistant",
-                                                          "content": f"Job Posting Analyzed! Here is the summary: {job_posting_summary}"})
+                    with st.chat_message("assistant"):
+                        st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting_summary}")
+                    st.session_state.messages.append({"role": "assistant",
+                                                      "content": f"Job Posting Analyzed! Here is the summary: {job_posting_summary}"})
+
+
+                # if prompt := st.chat_input("Job Posting...", key=hash("J")):
+                #     st.session_state.messages.append({"role": "user", "content": prompt})
+                #     with st.chat_message("user"):
+                #         st.markdown(prompt)
+                #
+                #     if st.button("Analyze Job Posting"):
+                #         job_posting_summary = get_job_posting(prompt)
+                #
+                #         with st.chat_message("assistant"):
+                #             st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting_summary}")
+                #         st.session_state.messages.append({"role": "assistant",
+                #                                           "content": f"Job Posting Analyzed! Here is the summary: {job_posting_summary}"})
 
 
 
