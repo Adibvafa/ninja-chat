@@ -243,15 +243,17 @@ def main():
                     st.markdown("Sure! Send me the job posting.")
                 st.session_state.messages.append({"role": "assistant", "content": "Sure! Send me the job posting."})
 
-                if prompt := st.chat_input("Job Posting...", key="J"):
-                    st.session_state.messages.append({"role": "user", "content": prompt})
-                    with st.chat_message("user"):
-                        st.markdown(prompt)
-                        job_posting = get_job_posting(prompt)
+                while True:
+                    if prompt := st.chat_input("Job Posting...", key="J"):
+                        st.session_state.messages.append({"role": "user", "content": prompt})
+                        with st.chat_message("user"):
+                            st.markdown(prompt)
+                            job_posting = get_job_posting(prompt)
 
-                        with st.chat_message("assistant"):
-                            st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
-                        st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
+                            with st.chat_message("assistant"):
+                                st.markdown(f"Job Posting Analyzed! Here is the summary: {job_posting}")
+                            st.session_state.messages.append({"role": "assistant", "content": f"Job Posting Analyzed! Here is the summary: {job_posting}"})
+                            break
 
 
 
