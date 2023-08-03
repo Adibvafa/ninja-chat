@@ -8,6 +8,8 @@ RECRUITER_HEAD_MAX_TOKENS = 1500
 RECRUITER_MAX_TOKENS = 450
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
 USER_SUMMARY_MAX_TOKENS = 150
+PROMPT_USER_FOR_LETTER = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
+
 
 def user_said(content, history, summarize=True):
     if summarize:
@@ -56,6 +58,9 @@ def ninja_chat(session_state, user_input, resume_texts):
         st.markdown(f'prev_input = {session_state.prev_input}')
     st.session_state.messages.append({"role": "assistant", "content": f'prev_input = {session_state.prev_input}'})
 
+    if user_input.strip().upper() not in ('Q', 'I', 'C', 'J') and session_state.prev_input not in ('Q', 'I', 'C', 'J'):
+        return PROMPT_USER_FOR_LETTER
+
     if user_input.strip().upper() == 'Q':
         session_state.prev_input = 'Q'
         return "Sure! I will try my best to answer your question."
@@ -69,9 +74,13 @@ def ninja_chat(session_state, user_input, resume_texts):
         return ''
 
     if session_state.prev_input.strip().upper() == 'J':
+        with st.chat_message("assistant"):
+            st.markdown(f'Analyzing Job Posting...')
+        st.session_state.messages.append({"role": "assistant", "content": f'Analyzing Job Posting...'})
+
         job = get_job_posting(user_input)
         session_state.job_posting = job
-        return f'Job Posting Analyzed! Summary:\n{job}'
+        return f'Job Posting Analyzed! Summary:\n\n{job}'
 
     if session_state.prev_input == 'N':
         return 'N'
@@ -243,10 +252,9 @@ def main():
 
     st.subheader("Let's Chat!")
     intro_message = "Hello! My name is Chat-Ninja and I'll assist you with analyzing resumes. Your uploaded resumes will be presented to AI recruiter teams in groups of 3, and each recruiter will express their analysis. Then, the head of recruiters will present you a final answer!"
-    intro_message_2 = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
 
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": intro_message + '\n\n' + intro_message_2}]
+        st.session_state.messages = [{"role": "assistant", "content": intro_message + '\n\n' + PROMPT_USER_FOR_LETTER}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
