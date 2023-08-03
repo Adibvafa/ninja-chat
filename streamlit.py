@@ -50,7 +50,7 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     return response, messages
 
 
-def ninja_chat(session_state, prev_input, user_input, resume_texts, messages, job_posting):
+def ninja_chat(session_state, prompt, resume_texts):
 
     with st.chat_message("assistant"):
         st.markdown(f'prev_input = {session_state.prev_input}')
@@ -58,55 +58,52 @@ def ninja_chat(session_state, prev_input, user_input, resume_texts, messages, jo
 
     if user_input.strip().upper() == 'Q':
         session_state.prev_input = 'Q'
-        return "Sure! I will try my best to answer your question.", messages
+        return "Sure! I will try my best to answer your question."
 
     if user_input.strip().upper() == 'J':
         session_state.prev_input = 'J'
-        return "Sure! Send me the job posting.", messages
+        return "Sure! Send me the job posting."
 
     if session_state.prev_input.strip().upper() == 'Q':
-        return '', answer_resume_question(user_input, resume_texts, messages, job_posting)
+        answer_resume_question(user_input, resume_texts, session_state)
+        return ''
 
     if session_state.prev_input.strip().upper() == 'J':
         job = get_job_posting(user_input)
         session_state.job_posting = job
-        return f'Job Posting Analyzed! Summary:\n{job}', messages
+        return f'Job Posting Analyzed! Summary:\n{job}'
 
     if session_state.prev_input == 'N':
-        return 'N', []
+        return 'N'
 
-    return 'ERRROROROR', []
-
-
+    return 'ERRROROROR'
 
 
-def answer_resume_question(question, resume_texts, messages, job_posting):
+
+
+def answer_resume_question(question, resume_texts, session_state):
     recruiters_guide = create_recruiters_guide(len(resume_texts))
     recruiters_response = {}
 
     for recruiter in recruiters_guide:
-        response = ask_recruiter(question, resume_texts, recruiters_guide[recruiter], job_posting)
+        response = ask_recruiter(question, resume_texts, recruiters_guide[recruiter], session_state)
         response = f'Recruiter {recruiter}, Analyzing Candidates {", ".join(recruiters_guide[recruiter])}:\n\n' + response
 
         with st.chat_message("assistant"):
             st.markdown(response)
-
         st.session_state.messages.append({"role": "assistant", "content": response})
         recruiters_response[recruiter] = response
 
 
-    response, messages = ask_head_recruiter(question, recruiters_guide, recruiters_response, messages, job_posting)
+    response = ask_head_recruiter(question, recruiters_guide, recruiters_response, session_state)
     response = f'Head Recruiter, Analyzing All Recruiters:\n\n' + response
 
     with st.chat_message("assistant"):
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
 
-    user_said(question, messages, summarize=True)
-    assistant_said(response, messages, summarize=True)
-
-    return messages
-
+    user_said(question, session_state.gpt_messages, summarize=True)
+    assistant_said(response, session_state.gpt_messages, summarize=True)
 
 
 def create_recruiters_guide(num_resumes):
@@ -154,7 +151,7 @@ def polish_messages(messages):
     return messages
 
 
-def ask_head_recruiter(question, recruiters_guide, recruiters_response, messages, job_posting):
+def ask_head_recruiter(question, recruiters_guide, recruiters_response):
     system = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
              f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
              f'Summarize relevant information from each recruiter with honesty and act as a professional recruiter' \
@@ -163,8 +160,8 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response, messages
     prompt = f'' \
              f'\nquestion: {question}'
 
-    if job_posting:
-        prompt = prompt + f'\njob posting: {job_posting}'
+    if session_state.job_posting:
+        prompt = prompt + f'\njob posting: {session_state.job_posting}'
 
 
     for i in range(len(recruiters_guide)):
@@ -172,13 +169,13 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response, messages
         prompt += f'\nrecruiter{i} analyzing candidates {candidates}: {recruiters_response[i]}'
     prompt += f'\ncommittee head:'
 
-    messages = polish_messages(messages)
+    session_state.gpt_messages = polish_messages(session_state.gpt_messages)
 
-    response, messages = ask_chatgpt(prompt, messages=messages, system=system, new_chat=False, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
-    del messages[-1]
-    return response, messages
+    response, session_state.gpt_messages = ask_chatgpt(prompt, messages=session_state.gpt_messages, system=system, new_chat=False, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
+    del session_state.gpt_messages[-1]
+    return response
 
-def ask_recruiter(question, resume_texts, candidates, job_posting):
+def ask_recruiter(question, resume_texts, candidates, session_state):
     system = f'Act as a recruiter of a committee of professional recruiters. The committee has to answer the question' \
              f'based on several resumes, yet you can analyze only 3 of them. Analyze resumes word by word, answer question' \
              f'and explain your reason with honesty very briefly to the committee. If you cannot answer the question,' \
@@ -187,8 +184,8 @@ def ask_recruiter(question, resume_texts, candidates, job_posting):
     prompt = f'' \
              f'\nquestion: {question}'
 
-    if job_posting:
-        prompt = prompt + f'\njob posting: {job_posting}'
+    if session_state.job_posting:
+        prompt = prompt + f'\njob posting: {session_state.job_posting}'
 
     for candidate in candidates:
         prompt += f'\ncandidate{candidate}: {resume_texts[int(candidate)]}'
@@ -226,7 +223,6 @@ def main():
 
     if uploaded_files:
         st.subheader("Uploaded PDFs:")
-        pdf_names = [file.name for file in uploaded_files]
         for i, pdf_file in enumerate(uploaded_files):
             new_name = f"resume{i}.pdf"
             with open(os.path.join(".", new_name), "wb") as f:
@@ -235,17 +231,16 @@ def main():
         pdf_names = [f'resume{i}.pdf' for i in range(len(uploaded_files))]
 
         st.subheader("Processed Resumes:")
-        resume_texts = resume_to_text(pdf_names)
+        st.session_state.resume_texts = resume_to_text(pdf_names)
 
-        candidates_info = {}
+        st.session_state.candidates_info = {}
         for i, resume_text in enumerate(resume_texts):
             st.write(f"Resume {i} From:")
             name, email = get_candidate_name_email(resume_text[:200])
-            candidates_info[i] = [name, email]
+            st.session_state.candidates_info[i] = [name, email]
             st.write(f'Name: {name}; Email: {email}\n')
 
 
-    # Chat Interface
     st.subheader("Let's Chat!")
     intro_message = "Hello! My name is Chat-Ninja and I'll assist you with analyzing resumes. Your uploaded resumes will be presented to AI recruiter teams in groups of 3, and each recruiter will express their analysis. Then, the head of recruiters will present you a final answer!"
     intro_message_2 = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
@@ -257,8 +252,8 @@ def main():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-
-    st.session_state.prev_input = 'N'; st.session_state.gpt_messages = []; st.session_state.job_posting = ''
+    if "prev_input" not in st.session_state and "gpt_messages" not in st.session_state and "job_posting" not in st.session_state:
+        st.session_state.prev_input = 'N'; st.session_state.gpt_messages = []; st.session_state.job_posting = ''
 
     if prompt := st.chat_input("Your Message..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -266,7 +261,7 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        ninja, messages = ninja_chat(st.session_state, prev_input, prompt, resume_texts, messages, job_posting)
+        ninja = ninja_chat(st.session_state, prompt, st.session_state.resume_texts)
 
 
         if len(ninja) > 0:
