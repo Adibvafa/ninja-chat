@@ -50,7 +50,7 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     return response, messages
 
 
-def ninja_chat(session_state, prompt, resume_texts):
+def ninja_chat(session_state, user_input, resume_texts):
 
     with st.chat_message("assistant"):
         st.markdown(f'prev_input = {session_state.prev_input}')
@@ -151,7 +151,7 @@ def polish_messages(messages):
     return messages
 
 
-def ask_head_recruiter(question, recruiters_guide, recruiters_response):
+def ask_head_recruiter(question, recruiters_guide, recruiters_response, session_state):
     system = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
              f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
              f'Summarize relevant information from each recruiter with honesty and act as a professional recruiter' \
