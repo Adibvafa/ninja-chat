@@ -56,8 +56,14 @@ def ninja_chat(prev_input, user_input, resume_texts, messages, job_posting):
         prev_input[0] = 'Q'
         return "Sure! I will try my best to answer your question.", messages
 
+    if user_input.strip().upper() == 'J':
+        return "Sure! Send me the job posting.", messages
+
     if prev_input[0].strip().upper() == 'Q':
         return '', answer_resume_question(user_input, resume_texts, messages, job_posting)
+
+    if prev_input[0].strip().upper() == 'J':
+        return get_job_posting(user_input), messages
 
     if prev_input[0] == 'N':
         return 'N', []
@@ -208,7 +214,7 @@ def resume_to_text(resume_list):
     return [preprocess_resume(resume_path) for resume_path in resume_list]
 
 
-def main(prev_input, messages, job_posting):
+def main():
     uploaded_files = st.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
 
     if uploaded_files:
@@ -245,6 +251,7 @@ def main(prev_input, messages, job_posting):
             st.markdown(message["content"])
 
 
+    prev_input = ['N']; messages = []; job_posting = ''
 
     if prompt := st.chat_input("Your Message..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -253,6 +260,9 @@ def main(prev_input, messages, job_posting):
             st.markdown(prompt)
 
         ninja, messages = ninja_chat(prev_input, prompt, resume_texts, messages, job_posting)
+
+        if prev_input[0].strip().upper() == 'J':
+            job_posting = ninja
 
 
         if len(ninja) > 0:
@@ -267,10 +277,7 @@ def main(prev_input, messages, job_posting):
 
 
 if __name__ == '__main__':
-    prev_input = ['N'];
-    messages = [];
-    job_posting = ''
-    main(prev_input, messages, job_posting)
+    main()
     #
     #
     #
