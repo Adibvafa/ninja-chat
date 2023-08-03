@@ -234,9 +234,9 @@ def main():
         st.session_state.resume_texts = resume_to_text(pdf_names)
 
         st.session_state.candidates_info = {}
-        for i, resume_text in enumerate(resume_texts):
+        for i, resume_text in enumerate(st.session_state.resume_texts):
             st.write(f"Resume {i} From:")
-            name, email = get_candidate_name_email(resume_text[:200])
+            name, email = get_candidate_name_email(resume_text[:150])
             st.session_state.candidates_info[i] = [name, email]
             st.write(f'Name: {name}; Email: {email}\n')
 
