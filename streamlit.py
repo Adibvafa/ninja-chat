@@ -52,6 +52,10 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
 
 def ninja_chat(prev_input, user_input, resume_texts, messages, job_posting):
 
+    with st.chat_message("assistant"):
+        st.markdown(f'prev_input = {prev_input}')
+    st.session_state.messages.append({"role": "assistant", "content": f'prev_input = {prev_input}'})
+
     if user_input.strip().upper() == 'Q':
         prev_input[0] = 'Q'
         return "Sure! I will try my best to answer your question.", messages
