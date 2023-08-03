@@ -208,7 +208,7 @@ def resume_to_text(resume_list):
     return [preprocess_resume(resume_path) for resume_path in resume_list]
 
 
-def main():
+def main(prev_input, messages, job_posting):
     uploaded_files = st.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
 
     if uploaded_files:
@@ -245,7 +245,6 @@ def main():
             st.markdown(message["content"])
 
 
-    prev_input = ['N']; messages = []; job_posting = ''
 
     if prompt := st.chat_input("Your Message..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -268,7 +267,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    prev_input = ['N'];
+    messages = [];
+    job_posting = ''
+    main(prev_input, messages, job_posting)
     #
     #
     #
