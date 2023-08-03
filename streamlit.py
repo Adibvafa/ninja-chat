@@ -50,26 +50,29 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     return response, messages
 
 
-def ninja_chat(prev_input, user_input, resume_texts, messages, job_posting):
+def ninja_chat(session_state, prev_input, user_input, resume_texts, messages, job_posting):
 
     with st.chat_message("assistant"):
-        st.markdown(f'prev_input = {prev_input}')
-    st.session_state.messages.append({"role": "assistant", "content": f'prev_input = {prev_input}'})
+        st.markdown(f'prev_input = {session_state.prev_input}')
+    st.session_state.messages.append({"role": "assistant", "content": f'prev_input = {session_state.prev_input}'})
 
     if user_input.strip().upper() == 'Q':
-        prev_input[0] = 'Q'
+        session_state.prev_input = 'Q'
         return "Sure! I will try my best to answer your question.", messages
 
     if user_input.strip().upper() == 'J':
+        session_state.prev_input = 'J'
         return "Sure! Send me the job posting.", messages
 
-    if prev_input[0].strip().upper() == 'Q':
+    if session_state.prev_input.strip().upper() == 'Q':
         return '', answer_resume_question(user_input, resume_texts, messages, job_posting)
 
-    if prev_input[0].strip().upper() == 'J':
-        return get_job_posting(user_input), messages
+    if session_state.prev_input.strip().upper() == 'J':
+        job = get_job_posting(user_input)
+        session_state.job_posting = job
+        return f'Job Posting Analyzed! Summary:\n{job}', messages
 
-    if prev_input[0] == 'N':
+    if session_state.prev_input == 'N':
         return 'N', []
 
     return 'ERRROROROR', []
@@ -255,7 +258,7 @@ def main():
             st.markdown(message["content"])
 
 
-    prev_input = ['N']; messages = []; job_posting = ''
+    st.session_state.prev_input = 'N'; st.session_state.gpt_messages = []; st.session_state.job_posting = ''
 
     if prompt := st.chat_input("Your Message..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -263,10 +266,7 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        ninja, messages = ninja_chat(prev_input, prompt, resume_texts, messages, job_posting)
-
-        if prev_input[0].strip().upper() == 'J':
-            job_posting = ninja
+        ninja, messages = ninja_chat(st.session_state, prev_input, prompt, resume_texts, messages, job_posting)
 
 
         if len(ninja) > 0:
