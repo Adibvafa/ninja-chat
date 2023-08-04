@@ -136,7 +136,7 @@ def ninja_chat(session_state, user_input):
         return 'If you want to also send calendar invite, send \'C\''
 
     if session_state.prev_input.strip().upper() == 'ENTERING_CANDIDATE':
-        calendar_invite(session_state.accepted_candidates[session_state.can])
+        calendar_invite(user_input, session_state.accepted_candidates[session_state.can])
         session_state.can += 1
 
         if session_state.can == len(session_state.accepted_candidates):
@@ -157,7 +157,7 @@ def ninja_chat(session_state, user_input):
 
 
 
-def calendar_invite(candidate_id):
+def calendar_invite(user_input, candidate_id):
     candidate_name = st.session_state.candidates_info[int(candidate_id)][0]
     candidate_email = st.session_state.candidates_info[int(candidate_id)][1]
 
@@ -233,7 +233,7 @@ def send_email(candidate_ids, subject, content):
 
     begin = content.find('['); end = content.find(']')
 
-    email_contents = [content[:begin] + f' {candidate} ' + content[end+1:] for candidate in candidate_names]
+    email_contents = [content[:begin] + f'{candidate}' + content[end+1:] for candidate in candidate_names]
     headers = {'Content-Type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache'}
 
     for i in range(len(candidate_emails)):
