@@ -133,6 +133,7 @@ def ninja_chat(session_state, user_input):
         session_state.accepted_candidates = user_input.replace(' ', '').split(',')
         session_state.accepted_candidates = [int(elem) for elem in session_state.accepted_candidates]
         send_email(session_state.accepted_candidates, session_state.subject, session_state.content)
+        del session_state.template_email
         return 'If you want to also send calendar invite, send \'C\''
 
     if session_state.prev_input.strip().upper() == 'ENTERING_CANDIDATE':
