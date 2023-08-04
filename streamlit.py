@@ -106,7 +106,7 @@ def ninja_chat(session_state, user_input):
     if session_state.prev_input.strip().upper() == 'I' and not 'template_email' in session_state:
         session_state.template_email = get_template_email(user_input, session_state.job_posting)
         session_state.subject, session_state.content = [string.strip() for string in session_state.template_email.split('**')]
-        return f'Template Email Generated!\n{session_state.template_email}\n\nNow send me the candidate ids (a number!) separated by comma.'
+        return f'Template Email Generated!\n\n\n{session_state.template_email}\n\nNow send me the candidate ids (a number!) separated by comma.'
 
     if session_state.prev_input.strip().upper() == 'I' and 'template_email' in session_state:
         destination_candidates = user_input.replace(' ', '').split(',')
@@ -126,8 +126,8 @@ def get_recruiter_name_email(user_input):
     name, email = [string.strip() for string in rec.split(';')]
 
     with st.chat_message("assistant"):
-        st.markdown(f'Alright. The name is set to {name} and email is set to {email}')
-    st.session_state.messages.append({"role": "assistant", "content": f'Alright. The name is set to {name} and email is set to {email}'})
+        st.markdown(f'Alright. The name is set to {name} and email is set to {email}. Generating template email...')
+    st.session_state.messages.append({"role": "assistant", "content": f'Alright. The name is set to {name} and email is set to {email}. Generating template email...'})
 
     return name, email
 
@@ -137,7 +137,7 @@ def get_template_email(user_input, job_posting):
     name, email = get_recruiter_name_email(user_input)
 
     system = f'Act as a recruiter who is sending interview invitation emails to selected candidates.' \
-             f'Using job posting, create a brief short invitation email for candidate [CANDIDATE] to invite them for an interview.' \
+             f'Using job posting, create a brief short invitation email for candidate [CANDIDATE] to invite them for an interview and ask them for their availability,.' \
              f'End subject with **. Only use recruiter name and email.'
 
     prompt = f'' \
@@ -154,6 +154,8 @@ def send_email(candidate_ids, subject, content):
     candidate_names = [st.session_state.candidates_info[int(each_id)][0] for each_id in candidate_ids]
     candidate_emails = [st.session_state.candidates_info[int(each_id)][1] for each_id in candidate_ids]
 
+    print(candidate_names, candidate_emails)
+
     email_contents = [content.replace('[CANDIDATE]', candidate) for candidate in candidate_names]
     headers = {'Content-Type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache'}
 
@@ -168,9 +170,9 @@ def send_email(candidate_ids, subject, content):
         response = requests.post(ZAPIER_TRIGGER_URL_EMAIL, data=data, headers=headers)
 
         if response.status_code == 200:
-            email_result = f'Interview Invitation Successfully Sent to\nCandidate: {candidate_names[i]}\nEmail:{destination_email}\n'
+            email_result = f'Interview Invitation Successfully Sent to\n\nCandidate: {candidate_names[i]}\n\nEmail:{destination_email}\n'
         else:
-            email_result = f'Failed to send Interview Invitation to\nCandidate: {candidate_names[i]}\nEmail:{destination_email}\n'
+            email_result = f'Failed to send Interview Invitation to\n\nCandidate: {candidate_names[i]}\n\nEmail:{destination_email}\n'
 
         with st.chat_message("assistant"):
             st.markdown(email_result)
@@ -290,7 +292,7 @@ def ask_recruiter(question, resume_texts, candidates, session_state):
 
 def get_candidate_name_email(resume):
     prompt = f'resume: {resume}. Only fill in the blanks using the scrapped beginning of resume. Stop after the last blank is filled. Candidate Name: [BLANK], Email: [BLANK]'
-    response = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=70, only_response=True, temp=0).strip()
+    response = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=100, only_response=True, temp=0).strip()
     return [elem.split(':')[-1].strip() for elem in response.split(',')]
 
 
