@@ -126,7 +126,7 @@ def ninja_chat(session_state, user_input):
 
 
 def get_recruiter_name_email(user_input):
-    prompt = f'Use message to sparse out the recruiter name and email separated by semicolon. message: {user_input}. Only send the name and email'
+    prompt = f'Use message to sparse out the name and email separated by semicolon. message: {user_input}. Only send the name, email'
     rec = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=250, temp=0, only_response=True)
     name, email = [string.strip() for string in rec.split(';')]
 
