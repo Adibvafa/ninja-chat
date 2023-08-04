@@ -129,7 +129,7 @@ def get_recruiter_name_email(user_input):
         st.markdown(f'Alright. The name is set to {name} and email is set to {email}')
     st.session_state.messages.append({"role": "assistant", "content": f'Alright. The name is set to {name} and email is set to {email}'})
 
-    return
+    return name, email
 
 
 def get_template_email(user_input, job_posting):
