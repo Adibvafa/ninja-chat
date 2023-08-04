@@ -328,26 +328,31 @@ def resume_to_text(resume_list):
 def main():
     uploaded_files = st.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
 
-    if 'resume_texts' not in st.session_state:
 
-        if uploaded_files:
-            st.subheader("Uploaded PDFs:")
-            for i, pdf_file in enumerate(uploaded_files):
-                new_name = f"resume{i}.pdf"
-                with open(os.path.join(".", new_name), "wb") as f:
-                    f.write(pdf_file.getbuffer())
-                st.write(f"Renamed To: {new_name}")
-            pdf_names = [f'resume{i}.pdf' for i in range(len(uploaded_files))]
+    if uploaded_files:
+        st.subheader("Uploaded PDFs:")
+        for i, pdf_file in enumerate(uploaded_files):
+            new_name = f"resume{i}.pdf"
+            with open(os.path.join(".", new_name), "wb") as f:
+                f.write(pdf_file.getbuffer())
+            st.write(f"Renamed To: {new_name}")
+        pdf_names = [f'resume{i}.pdf' for i in range(len(uploaded_files))]
 
-            st.subheader("Processed Resumes:")
+        st.subheader("Processed Resumes:")
+
+        if 'resume_texts' not in st.session_state and 'candidates_info' not in st.session_state:
             st.session_state.resume_texts = resume_to_text(pdf_names)
-
             st.session_state.candidates_info = {}
             for i, resume_text in enumerate(st.session_state.resume_texts):
                 st.write(f"Resume {i} From:")
                 name, email = get_candidate_name_email(resume_text[:RESUME_BEGINNING])
                 st.session_state.candidates_info[i] = [name, email]
                 st.write(f'Name: {name}; Email: {email}\n')
+
+        for i, resume_text in enumerate(st.session_state.resume_texts):
+            st.write(f"Resume {i} From:")
+            name, email = st.session_state.candidates_info[i]
+            st.write(f'Name: {name}; Email: {email}\n')
 
 
     st.subheader("Let's Chat!")
