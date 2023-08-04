@@ -10,11 +10,9 @@ RECRUITER_MAX_TOKENS = 500
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
 RESUME_BEGINNING = 250
 USER_SUMMARY_MAX_TOKENS = 150
-RECRUITER_TEMP = 0.05
-HEAD_RECRUITER_SYSTEM = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
-             f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
-             f'Summarize relevant information from each recruiter with honesty and act as a professional recruiter' \
-             f'to answer question. Refer to each candidate by their number and name.'
+RECRUITER_TEMP = 0.1
+HEAD_TEMP = 0.1
+HEAD_RECRUITER_SYSTEM = f'Act as a the intelligent head of a committee of professional recruiters trying to answer question. Candidates resumes where split into small groups and each recruiter has only analyzed few resumes. Summarize relevant information from each recruiter with honesty and act as a professional recruiter with great understanding and intelligence to answer question. Refer to each candidate by their number and name.'
 PROMPT_USER_FOR_LETTER = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
 
 
@@ -282,12 +280,18 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response, session_
 
     session_state.gpt_messages = polish_messages(session_state.gpt_messages)
 
-    response, session_state.gpt_messages = ask_chatgpt(prompt, messages=session_state.gpt_messages, system=None, new_chat=False, temp=RECRUITER_TEMP, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
+    response, session_state.gpt_messages = ask_chatgpt(prompt, messages=session_state.gpt_messages, system=None, new_chat=False, temp=HEAD_TEMP, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
     del session_state.gpt_messages[-1]
     return response
 
 def ask_recruiter(question, resume_texts, candidates, session_state):
-    system = f'Act as a recruiter of a committee of professional recruiters. The committee has to answer the question based on several resumes, yet you can analyze only {len(candidates)} of them. Analyze resumes, answer question and explain your reason with honesty very briefly to the committee. If you cannot answer the question, summarize the very short part of resume that corresponds to that question. Refer to each candidate by their number and name. End sentences with dot.'
+
+    system = f'Act as a intelligent recruiter of a committee of professional recruiters.' \
+             f'The committee has to answer the question based on several resumes, yet you can analyze only {len(candidates)} of them.' \
+             f'Analyze resumes and understand them, answer question and explain your reason with honesty very briefly to the committee.' \
+             f'If you cannot answer the question, summarize the very short part of resume that corresponds to that question.' \
+             f'Refer to each candidate by their number and name. End sentences with dot.'
+
     prompt = f'' \
              f'\nquestion: {question}'
 
