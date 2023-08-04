@@ -7,6 +7,7 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 RECRUITER_HEAD_MAX_TOKENS = 1500
 RECRUITER_MAX_TOKENS = 500
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
+RESUME_BEGINNING = 250
 USER_SUMMARY_MAX_TOKENS = 150
 HEAD_RECRUITER_SYSTEM = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
              f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
@@ -247,7 +248,7 @@ def main():
         st.session_state.candidates_info = {}
         for i, resume_text in enumerate(st.session_state.resume_texts):
             st.write(f"Resume {i} From:")
-            name, email = get_candidate_name_email(resume_text[:150])
+            name, email = get_candidate_name_email(resume_text[:RESUME_BEGINNING])
             st.session_state.candidates_info[i] = [name, email]
             st.write(f'Name: {name}; Email: {email}\n')
 
