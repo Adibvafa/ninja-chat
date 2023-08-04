@@ -5,7 +5,7 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 ZAPIER_TRIGGER_URL_CAL = f'https://hooks.zapier.com/hooks/catch/16135920/31nzjsx/'
 ZAPIER_TRIGGER_URL_EMAIL = f'https://hooks.zapier.com/hooks/catch/16135920/31nuizf/'
-JOB_POSTING_MAX_TOKENS = 50
+JOB_POSTING_MAX_TOKENS = 500
 RECRUITER_HEAD_MAX_TOKENS = 1500
 RECRUITER_MAX_TOKENS = 500
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
