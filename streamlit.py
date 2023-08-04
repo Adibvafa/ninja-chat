@@ -79,7 +79,7 @@ def ninja_chat(session_state, user_input):
 
     if user_input.strip().upper() == 'J':
         session_state.prev_input = 'J'
-        return "Sure! Send me the job posting."
+        return "Got it! Send me the job posting."
 
     if session_state.prev_input.strip().upper() == 'Q':
         answer_resume_question(user_input, resume_texts, session_state)
