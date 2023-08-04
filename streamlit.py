@@ -207,7 +207,7 @@ def ask_recruiter(question, resume_texts, candidates, session_state):
 
 def get_candidate_name_email(resume):
     prompt = f'resume: {resume}. Only fill in the blanks using the scrapped beginning of resume. Stop after the last blank is filled. Candidate Name: [BLANK], Email: [BLANK]'
-    response = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=60, only_response=True).strip()
+    response = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=70, only_response=True, temp=0).strip()
     return [elem.split(':')[-1].strip() for elem in response.split(',')]
 
 
