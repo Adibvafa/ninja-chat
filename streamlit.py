@@ -105,7 +105,8 @@ def ninja_chat(session_state, user_input):
 
     if session_state.prev_input.strip().upper() == 'I' and not 'template_email' in session_state:
         session_state.template_email = get_template_email(user_input, session_state.job_posting)
-        session_state.subject, session_state.content = [string.strip() for string in session_state.template_email.split('**')]
+        session_state.subject, session_state.content = session_state.template_email[:session_state.template_email.find('Dear')].strip(), session_state.template_email[session_state.template_email.find('Dear'):].strip()
+
 
         with st.chat_message("assistant"):
             st.markdown(f'Template Email Generated!\n\n\n{session_state.template_email}')
@@ -142,8 +143,8 @@ def get_template_email(user_input, job_posting):
     name, email = get_recruiter_name_email(user_input)
 
     system = f'Act as a recruiter who is sending interview invitation emails to selected candidates.' \
-             f'Using job posting, create a brief short invitation email for candidate [CANDIDATE] to invite them for an interview and ask them for their availability,.' \
-             f'End subject with **. Only use recruiter name and email.'
+             f'Using job posting, create a brief short invitation email with subject for candidate [CANDIDATE] to invite them for an interview.' \
+             f'Only use recruiter name and email for reference. Start body of email with Dear.'
 
     prompt = f'' \
              f'job posting: {job_posting}' \
