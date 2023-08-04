@@ -9,6 +9,7 @@ RECRUITER_MAX_TOKENS = 500
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
 RESUME_BEGINNING = 250
 USER_SUMMARY_MAX_TOKENS = 150
+RECRUITER_TEMP = 0.05
 HEAD_RECRUITER_SYSTEM = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
              f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
              f'Summarize relevant information from each recruiter with honesty and act as a professional recruiter' \
@@ -66,7 +67,7 @@ def ninja_chat(session_state, user_input):
 
     # for debugging?
     with st.chat_message("assistant"):
-        st.markdown(f'Current Mode = {session_state.prev_input}')
+        st.markdown(f'Prev Mode = {session_state.prev_input}')
     st.session_state.messages.append({"role": "assistant", "content": f'Current Mode = {session_state.prev_input}'})
 
     if user_input.strip().upper() not in ('Q', 'I', 'C', 'J') and session_state.prev_input not in ('Q', 'I', 'C', 'J'):
@@ -106,13 +107,19 @@ def answer_resume_question(question, resume_texts, session_state):
     recruiters_response = {}
 
     for recruiter in recruiters_guide:
+
+        analyzing_message = f'Recruiter {recruiter}, Analyzing Candidates {", ".join(recruiters_guide[recruiter])}:\n\n'
+        with st.chat_message("assistant"):
+            st.markdown(analyzing_message)
+        st.session_state.messages.append({"role": "assistant", "content": analyzing_message})
+
         response = ask_recruiter(question, resume_texts, recruiters_guide[recruiter], session_state)
-        response = f'Recruiter {recruiter}, Analyzing Candidates {", ".join(recruiters_guide[recruiter])}:\n\n' + response
 
         with st.chat_message("assistant"):
             st.markdown(response)
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        recruiters_response[recruiter] = response
+        del st.session_state.messages[-1]
+        st.session_state.messages.append({"role": "assistant", "content": analyzing_message + response})
+        recruiters_response[recruiter] = analyzing_message + response
 
 
     response = ask_head_recruiter(question, recruiters_guide, recruiters_response, session_state)
@@ -187,7 +194,7 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response, session_
 
     session_state.gpt_messages = polish_messages(session_state.gpt_messages)
 
-    response, session_state.gpt_messages = ask_chatgpt(prompt, messages=session_state.gpt_messages, system=None, new_chat=False, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
+    response, session_state.gpt_messages = ask_chatgpt(prompt, messages=session_state.gpt_messages, system=None, new_chat=False, temp=RECRUITER_TEMP, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
     del session_state.gpt_messages[-1]
     return response
 
@@ -203,7 +210,7 @@ def ask_recruiter(question, resume_texts, candidates, session_state):
         prompt += f'\ncandidate{candidate}: {resume_texts[int(candidate)]}'
     prompt += f'\ncommittee head:'
 
-    return ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=RECRUITER_MAX_TOKENS, only_response=True, temp=0.2)
+    return ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=RECRUITER_MAX_TOKENS, only_response=True, temp=RECRUITER_TEMP)
 
 
 def get_candidate_name_email(resume):
