@@ -66,9 +66,9 @@ def ninja_chat(session_state, user_input):
     resume_texts = session_state.resume_texts
 
     # for debugging?
-    with st.chat_message("assistant"):
-        st.markdown(f'Prev Mode = {session_state.prev_input}')
-    st.session_state.messages.append({"role": "assistant", "content": f'Current Mode = {session_state.prev_input}'})
+    # with st.chat_message("assistant"):
+    #     st.markdown(f'Prev Mode = {session_state.prev_input}')
+    # st.session_state.messages.append({"role": "assistant", "content": f'Current Mode = {session_state.prev_input}'})
 
     if user_input.strip().upper() not in ('Q', 'I', 'C', 'J') and session_state.prev_input not in ('Q', 'I', 'C', 'J', 'ENTERING_CANDIDATE'):
         return PROMPT_USER_FOR_LETTER
