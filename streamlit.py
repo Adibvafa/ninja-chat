@@ -5,9 +5,13 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
 RECRUITER_HEAD_MAX_TOKENS = 1500
-RECRUITER_MAX_TOKENS = 450
+RECRUITER_MAX_TOKENS = 500
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
 USER_SUMMARY_MAX_TOKENS = 150
+HEAD_RECRUITER_SYSTEM = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
+             f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
+             f'Summarize relevant information from each recruiter with honesty and act as a professional recruiter' \
+             f'to answer question. Refer to each candidate by their number and name.'
 PROMPT_USER_FOR_LETTER = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
 
 
@@ -52,11 +56,17 @@ def ask_chatgpt(user_content, messages, system=None, new_chat=False, max_tokens=
     return response, messages
 
 
-def ninja_chat(session_state, user_input, resume_texts):
+def ninja_chat(session_state, user_input):
 
+    if 'resume_texts' not in session_state:
+        return 'No resumes found! Please upload them first.'
+
+    resume_texts = session_state.resume_texts
+
+    # for debugging?
     with st.chat_message("assistant"):
-        st.markdown(f'prev_input = {session_state.prev_input}')
-    st.session_state.messages.append({"role": "assistant", "content": f'prev_input = {session_state.prev_input}'})
+        st.markdown(f'Current Mode = {session_state.prev_input}')
+    st.session_state.messages.append({"role": "assistant", "content": f'Current Mode = {session_state.prev_input}'})
 
     if user_input.strip().upper() not in ('Q', 'I', 'C', 'J') and session_state.prev_input not in ('Q', 'I', 'C', 'J'):
         return PROMPT_USER_FOR_LETTER
@@ -82,8 +92,8 @@ def ninja_chat(session_state, user_input, resume_texts):
         session_state.job_posting = job
         return f'Job Posting Analyzed! Summary:\n\n{job}'
 
-    if session_state.prev_input == 'N':
-        return 'N'
+    if session_state.prev_input == 'None':
+        return 'None'
 
     return 'ERRROROROR'
 
@@ -161,10 +171,6 @@ def polish_messages(messages):
 
 
 def ask_head_recruiter(question, recruiters_guide, recruiters_response, session_state):
-    system = f'Act as a the head of a committee of professional recruiters trying to answer question.' \
-             f'Candidates resumes where split into groups of three and each recruiter has only analyzed three resumes.' \
-             f'Summarize relevant information from each recruiter with honesty and act as a professional recruiter' \
-             f'to answer question. Refer to each candidate by their number and name.'
 
     prompt = f'' \
              f'\nquestion: {question}'
@@ -180,16 +186,12 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response, session_
 
     session_state.gpt_messages = polish_messages(session_state.gpt_messages)
 
-    response, session_state.gpt_messages = ask_chatgpt(prompt, messages=session_state.gpt_messages, system=system, new_chat=False, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
+    response, session_state.gpt_messages = ask_chatgpt(prompt, messages=session_state.gpt_messages, system=None, new_chat=False, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
     del session_state.gpt_messages[-1]
     return response
 
 def ask_recruiter(question, resume_texts, candidates, session_state):
-    system = f'Act as a recruiter of a committee of professional recruiters. The committee has to answer the question' \
-             f'based on several resumes, yet you can analyze only 3 of them. Analyze resumes word by word, answer question' \
-             f'and explain your reason with honesty very briefly to the committee. If you cannot answer the question,' \
-             f'return the very short part of resume that corresponds to that question. Refer to each candidate' \
-             f'by their number and name. End sentences with dot.'
+    system = f'Act as a recruiter of a committee of professional recruiters. The committee has to answer the question based on several resumes, yet you can analyze only 3 of them. Analyze resumes, answer question and explain your reason with honesty very briefly to the committee. If you cannot answer the question, summarize the very short part of resume that corresponds to that question. Refer to each candidate by their number and name. End sentences with dot.'
     prompt = f'' \
              f'\nquestion: {question}'
 
@@ -261,7 +263,10 @@ def main():
             st.markdown(message["content"])
 
     if "prev_input" not in st.session_state and "gpt_messages" not in st.session_state and "job_posting" not in st.session_state:
-        st.session_state.prev_input = 'N'; st.session_state.gpt_messages = []; st.session_state.job_posting = ''
+        st.session_state.prev_input = 'None'
+        st.session_state.gpt_messages = [{"role":"system", "content":HEAD_RECRUITER_SYSTEM}]
+        st.session_state.job_posting = ''
+
 
     if prompt := st.chat_input("Your Message..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -269,7 +274,7 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        ninja = ninja_chat(st.session_state, prompt, st.session_state.resume_texts)
+        ninja = ninja_chat(st.session_state, prompt)
 
 
         if len(ninja) > 0:
