@@ -165,7 +165,9 @@ def send_email(candidate_ids, subject, content):
 
     print(candidate_names, candidate_emails)
 
-    email_contents = [content.replace('[CANDIDATE]', candidate) for candidate in candidate_names]
+    begin = content.find('['); end = content.find(']')
+
+    email_contents = [content[:begin] + f' {candidate} ' + content[end+1:] for candidate in candidate_names]
     headers = {'Content-Type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache'}
 
     for i in range(len(candidate_emails)):
@@ -179,9 +181,9 @@ def send_email(candidate_ids, subject, content):
         response = requests.post(ZAPIER_TRIGGER_URL_EMAIL, data=data, headers=headers)
 
         if response.status_code == 200:
-            email_result = f'Interview Invitation Successfully Sent to\n\nCandidate: {candidate_names[i]}'
+            email_result = f'Successfully Sent Interview Invitation to Candidate: {candidate_names[i]}'
         else:
-            email_result = f'Failed to send Interview Invitation to\n\nCandidate: {candidate_names[i]}'
+            email_result = f'Failed to Send Interview Invitation to Candidate: {candidate_names[i]}'
 
         with st.chat_message("assistant"):
             st.markdown(email_result)
