@@ -287,7 +287,7 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response, session_
     return response
 
 def ask_recruiter(question, resume_texts, candidates, session_state):
-    system = f'Act as a recruiter of a committee of professional recruiters. The committee has to answer the question based on several resumes, yet you can analyze only 3 of them. Analyze resumes, answer question and explain your reason with honesty very briefly to the committee. If you cannot answer the question, summarize the very short part of resume that corresponds to that question. Refer to each candidate by their number and name. End sentences with dot.'
+    system = f'Act as a recruiter of a committee of professional recruiters. The committee has to answer the question based on several resumes, yet you can analyze only {len(candidates)} of them. Analyze resumes, answer question and explain your reason with honesty very briefly to the committee. If you cannot answer the question, summarize the very short part of resume that corresponds to that question. Refer to each candidate by their number and name. End sentences with dot.'
     prompt = f'' \
              f'\nquestion: {question}'
 
@@ -326,10 +326,9 @@ def resume_to_text(resume_list):
 
 
 def main():
+    uploaded_files = st.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
 
-    if resume_texts not in st.session_state:
-
-        uploaded_files = st.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
+    if 'resume_texts' not in st.session_state:
 
         if uploaded_files:
             st.subheader("Uploaded PDFs:")
