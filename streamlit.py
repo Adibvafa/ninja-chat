@@ -106,7 +106,12 @@ def ninja_chat(session_state, user_input):
     if session_state.prev_input.strip().upper() == 'I' and not 'template_email' in session_state:
         session_state.template_email = get_template_email(user_input, session_state.job_posting)
         session_state.subject, session_state.content = [string.strip() for string in session_state.template_email.split('**')]
-        return f'Template Email Generated!\n\n\n{session_state.template_email}\n\nNow send me the candidate ids (a number!) separated by comma.'
+
+        with st.chat_message("assistant"):
+            st.markdown(f'Template Email Generated!\n\n\n{session_state.template_email}')
+        st.session_state.messages.append({"role": "assistant", "content": f'Template Email Generated!\n\n\n{session_state.template_email}'})
+
+        return 'Now send me the candidate ids (a number!) separated by comma.'
 
     if session_state.prev_input.strip().upper() == 'I' and 'template_email' in session_state:
         destination_candidates = user_input.replace(' ', '').split(',')
@@ -160,7 +165,7 @@ def send_email(candidate_ids, subject, content):
     headers = {'Content-Type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache'}
 
     for i in range(len(candidate_emails)):
-        destination_email = candidate_emails[i]
+        destination_email = candidate_emails[i].strip()
 
         data = {
             "destination_email": destination_email,
@@ -170,9 +175,9 @@ def send_email(candidate_ids, subject, content):
         response = requests.post(ZAPIER_TRIGGER_URL_EMAIL, data=data, headers=headers)
 
         if response.status_code == 200:
-            email_result = f'Interview Invitation Successfully Sent to\n\nCandidate: {candidate_names[i]}\n\nEmail:{destination_email}\n'
+            email_result = f'Interview Invitation Successfully Sent to\n\nCandidate: {candidate_names[i]}'
         else:
-            email_result = f'Failed to send Interview Invitation to\n\nCandidate: {candidate_names[i]}\n\nEmail:{destination_email}\n'
+            email_result = f'Failed to send Interview Invitation to\n\nCandidate: {candidate_names[i]}'
 
         with st.chat_message("assistant"):
             st.markdown(email_result)
