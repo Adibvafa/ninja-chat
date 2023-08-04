@@ -4,6 +4,7 @@ import streamlit as st
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 ZAPIER_TRIGGER_URL_EMAIL = f'https://hooks.zapier.com/hooks/catch/16135920/31nuizf/'
+JOB_POSTING_MAX_TOKENS = 50
 RECRUITER_HEAD_MAX_TOKENS = 1500
 RECRUITER_MAX_TOKENS = 500
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
@@ -122,7 +123,13 @@ def ninja_chat(session_state, user_input):
 def get_recruiter_name_email(user_input):
     prompt = f'Use message to sparse out the recruiter name and email separated by semicolon. message: {user_input}. Only send the name and email'
     rec = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=250, temp=0, only_response=True)
-    return [string.strip() for string in rec.split(';')]
+    name, email = [string.strip() for string in rec.split(';')]
+
+    with st.chat_message("assistant"):
+        st.markdown(f'Alright. The name is set to {name} and email is set to {email}')
+    st.session_state.messages.append({"role": "assistant", "content": f'Alright. The name is set to {name} and email is set to {email}'})
+
+    return
 
 
 def get_template_email(user_input, job_posting):
@@ -289,7 +296,7 @@ def get_candidate_name_email(resume):
 
 def get_job_posting(raw_posting):
     prompt = f'Act as a professional recruiter. Summarize the most important information of the job posting: {raw_posting}'
-    return ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=500, only_response=True, temp=0)
+    return ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=JOB_POSTING_MAX_TOKENS, only_response=True, temp=0)
 
 
 def preprocess_resume(pdf_path):
