@@ -3,6 +3,7 @@ import streamlit as st
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
+ZAPIER_TRIGGER_URL_CAL = f'https://hooks.zapier.com/hooks/catch/16135920/31nzjsx/'
 ZAPIER_TRIGGER_URL_EMAIL = f'https://hooks.zapier.com/hooks/catch/16135920/31nuizf/'
 JOB_POSTING_MAX_TOKENS = 50
 RECRUITER_HEAD_MAX_TOKENS = 1500
@@ -10,8 +11,8 @@ RECRUITER_MAX_TOKENS = 500
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
 RESUME_BEGINNING = 250
 USER_SUMMARY_MAX_TOKENS = 150
-RECRUITER_TEMP = 0.1
-HEAD_TEMP = 0.1
+RECRUITER_TEMP = 0.05
+HEAD_TEMP = 0.05
 HEAD_RECRUITER_SYSTEM = f'Act as a the intelligent head of a committee of professional recruiters trying to answer question. Candidates resumes where split into small groups and each recruiter has only analyzed few resumes. Summarize relevant information from each recruiter with honesty and act as a professional recruiter with great understanding and intelligence to answer question. Refer to each candidate by their number and name.'
 PROMPT_USER_FOR_LETTER = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
 
@@ -69,7 +70,7 @@ def ninja_chat(session_state, user_input):
         st.markdown(f'Prev Mode = {session_state.prev_input}')
     st.session_state.messages.append({"role": "assistant", "content": f'Current Mode = {session_state.prev_input}'})
 
-    if user_input.strip().upper() not in ('Q', 'I', 'C', 'J') and session_state.prev_input not in ('Q', 'I', 'C', 'J'):
+    if user_input.strip().upper() not in ('Q', 'I', 'C', 'J') and session_state.prev_input not in ('Q', 'I', 'C', 'J', 'ENTERING_CANDIDATE'):
         return PROMPT_USER_FOR_LETTER
 
     if user_input.strip().upper() == 'Q':
@@ -89,6 +90,23 @@ def ninja_chat(session_state, user_input):
         session_state.prev_input = 'I'
         return "Let's Go! First, send me the recruiter name and email to be written in invitation email. The format is: name, email"
 
+    if user_input.strip().upper() == 'C':
+
+        if len(session_state.job_posting) < 1:
+            session_state.prev_input = 'J'
+            return "First send me the job posting!"
+
+        if 'accepted_candidates' not in session_state:
+            session_state.prev_input = 'None'
+            return "You need to use 'I' mode to send invitation emails first."
+
+        session_state.can = 0
+        session_state.cal_can = session_state.accepted_candidates[session_state.can]
+        session_state.prev_input = 'ENTERING_CANDIDATE'
+        return f"Very well, Send me the date and duration of interview for Candidate{session_state.cal_can} with Name: {session_state.candidates_info[session_state.cal_can][0]}.\n\n" \
+               f"For example: 2023/07/26 4PM, 30 mins.\n\n" \
+               f"If you are done with sending invitations, change the mode e.g. by entering 'Q'."
+
     if session_state.prev_input.strip().upper() == 'Q':
         answer_resume_question(user_input, resume_texts, session_state)
         return ''
@@ -105,7 +123,6 @@ def ninja_chat(session_state, user_input):
         session_state.template_email = get_template_email(user_input, session_state.job_posting)
         session_state.subject, session_state.content = session_state.template_email[:session_state.template_email.find('Dear')].strip(), session_state.template_email[session_state.template_email.find('Dear'):].strip()
 
-
         with st.chat_message("assistant"):
             st.markdown(f'Template Email Generated!\n\n\n{session_state.template_email}')
         st.session_state.messages.append({"role": "assistant", "content": f'Template Email Generated!\n\n\n{session_state.template_email}'})
@@ -113,15 +130,67 @@ def ninja_chat(session_state, user_input):
         return 'Now send me the candidate ids (a number!) separated by comma.'
 
     if session_state.prev_input.strip().upper() == 'I' and 'template_email' in session_state:
-        destination_candidates = user_input.replace(' ', '').split(',')
-        send_email(destination_candidates, session_state.subject, session_state.content)
+        session_state.accepted_candidates = user_input.replace(' ', '').split(',')
+        send_email(session_state.accepted_candidates, session_state.subject, session_state.content)
         return 'If you want to also send calendar invite, send \'C\''
+
+    if session_state.prev_input.strip().upper() == 'ENTERING_CANDIDATE':
+        calendar_invite(session_state.accepted_candidates[session_state.can])
+        session_state.can += 1
+
+        if session_state.can == len(session_state.accepted_candidates):
+            session_state.prev_input = 'None'
+            return 'Calendar invitation has now been sent to all accepted candidates.'
+
+        session_state.cal_can = session_state.accepted_candidates[session_state.can]
+        return f"Very well, Send me the date and duration of interview for Candidate{session_state.cal_can} with Name: {session_state.candidates_info[session_state.cal_can][0]}.\n\n" \
+               f"For example: 2023/07/26 4PM, 30 mins.\n\n" \
+               f"If you are done with sending invitations, change the mode e.g. by entering 'Q'."
+
 
     if session_state.prev_input == 'None':
         return 'None'
 
     return 'ERRROROROR'
 
+
+
+
+def calendar_invite(candidate_id):
+    candidate_name = st.session_state.candidates_info[int(candidate_id)][0]
+    candidate_email = st.session_state.candidates_info[int(candidate_id)][1]
+
+    start, end = get_time_interview(user_input)
+    start = start.strip(); end = end.strip()
+
+    summary = st.session_state.subject
+
+    headers = {'Content-Type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache'}
+
+    data = {
+        "destination_email": candidate_email,
+        "date_time_start": start,
+        "date_time_end": end,
+        "summary": summary + f' - {candidate_name}',
+    }
+
+    response = requests.post(ZAPIER_TRIGGER_URL_CAL, data=data, headers=headers)
+
+    if response.status_code == 200:
+        email_result = f'Successfully Sent Calendar Schedule to Candidate: {candidate_name}'
+    else:
+        email_result = f'Failed to Send Calendar Schedule to Candidate: {candidate_name}'
+
+    with st.chat_message("assistant"):
+        st.markdown(email_result)
+    st.session_state.messages.append({"role": "assistant", "content": email_result})
+
+
+def get_time_interview(user_input):
+    prompt = f"You are presented with a date and duration for an interview. Return the start and end data of interview in ISO format." \
+             f"Date and duration: {user_input.strip()}. [BLANK], [BLANK]. Only return the ISO formats separated by ,"
+
+    return ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=100, only_response=True, temp=0).split(',')
 
 
 def get_recruiter_name_email(user_input):
@@ -133,7 +202,7 @@ def get_recruiter_name_email(user_input):
     email = email.replace(' ', '').strip()
 
     with st.chat_message("assistant"):
-        st.markdown(f'Alright. The name is set to {name} and email is set to {email}. Generating template email...')
+        st.markdown(f'Alright. The name is set to {name} and email is set to {email}.\n\nGenerating template email...')
     st.session_state.messages.append({"role": "assistant", "content": f'Alright. The name is set to {name} and email is set to {email}. Generating template email...'})
 
     return name, email
@@ -160,8 +229,6 @@ def send_email(candidate_ids, subject, content):
 
     candidate_names = [st.session_state.candidates_info[int(each_id)][0] for each_id in candidate_ids]
     candidate_emails = [st.session_state.candidates_info[int(each_id)][1] for each_id in candidate_ids]
-
-    print(candidate_names, candidate_emails)
 
     begin = content.find('['); end = content.find(']')
 
@@ -229,6 +296,8 @@ def create_recruiters_guide(num_resumes):
         if count == 3:
             count = 0
             recruiter += 1
+            recruiters_guide[recruiter] = [str(i_resume)]
+            count += 1
 
         else:
             if recruiter in recruiters_guide:
