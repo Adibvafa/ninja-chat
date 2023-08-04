@@ -89,7 +89,7 @@ def ninja_chat(session_state, user_input):
             return "First send me the job posting!"
 
         session_state.prev_input = 'I'
-        return "Let's Go! First, send me the recruiter name and email to be written in invitation email."
+        return "Let's Go! First, send me the recruiter name and email to be written in invitation email. The format is: name, email"
 
     if session_state.prev_input.strip().upper() == 'Q':
         answer_resume_question(user_input, resume_texts, session_state)
@@ -127,9 +127,12 @@ def ninja_chat(session_state, user_input):
 
 
 def get_recruiter_name_email(user_input):
-    prompt = f'Use message to sparse out the name and email separated by semicolon. message: {user_input}. Only send the name, email'
-    rec = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=250, temp=0, only_response=True)
-    name, email = [string.strip() for string in rec.split(';')]
+    # prompt = f'Use message to sparse out the name and email separated by semicolon. message: {user_input}. Only send the name, email'
+    # rec = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=250, temp=0, only_response=True)
+    # name, email = [string.strip() for string in rec.split(';')]
+    name, email = user_input.strip().split(',')
+    name = name.strip()
+    email = email.replace(' ', '').strip()
 
     with st.chat_message("assistant"):
         st.markdown(f'Alright. The name is set to {name} and email is set to {email}. Generating template email...')
