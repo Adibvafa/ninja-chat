@@ -1,9 +1,9 @@
-import openai, os, pdfplumber, toml, tiktoken
+import openai, os, pdfplumber, toml, tiktoken, requests
 import streamlit as st
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-
+ZAPIER_TRIGGER_URL_EMAIL = f'https://hooks.zapier.com/hooks/catch/16135920/31nuizf/'
 RECRUITER_HEAD_MAX_TOKENS = 1500
 RECRUITER_MAX_TOKENS = 500
 ASSISTANT_SUMMARY_MAX_TOKENS = 350
@@ -81,6 +81,15 @@ def ninja_chat(session_state, user_input):
         session_state.prev_input = 'J'
         return "Got it! Send me the job posting."
 
+    if user_input.strip().upper() == 'I':
+
+        if len(session_state.job_posting) < 1:
+            session_state.prev_input = 'J'
+            return "First send me the job posting!"
+
+        session_state.prev_input = 'I'
+        return "Let's Go! First, send me the recruiter name and email to be written in invitation email."
+
     if session_state.prev_input.strip().upper() == 'Q':
         answer_resume_question(user_input, resume_texts, session_state)
         return ''
@@ -90,9 +99,18 @@ def ninja_chat(session_state, user_input):
             st.markdown(f'Analyzing Job Posting...')
         st.session_state.messages.append({"role": "assistant", "content": f'Analyzing Job Posting...'})
 
-        job = get_job_posting(user_input)
-        session_state.job_posting = job
-        return f'Job Posting Analyzed! Summary:\n\n{job}'
+        session_state.job_posting = get_job_posting(user_input)
+        return f'Job Posting Analyzed! Summary:\n\n{session_state.job_posting}'
+
+    if session_state.prev_input.strip().upper() == 'I' and not 'template_email' in session_state:
+        session_state.template_email = get_template_email(user_input, session_state.job_posting)
+        session_state.subject, session_state.content = [string.strip() for string in template_email.split('**')]
+        return f'Template Email Generated!\n{session_state.template_email}\n\nNow send me the candidate ids (a number!) separated by comma.'
+
+    if session_state.prev_input.strip().upper() == 'I' and 'template_email' in session_state:
+        destination_candidates = user_input.replace(' ', '').split(',')
+        send_email(destination_candidates, session_state.subject, session_state.content)
+        return 'If you want to also send calendar invite, send \'C\''
 
     if session_state.prev_input == 'None':
         return 'None'
@@ -100,6 +118,56 @@ def ninja_chat(session_state, user_input):
     return 'ERRROROROR'
 
 
+
+def get_recruiter_name_email(user_input):
+    prompt = f'Use message to sparse out the recruiter name and email separated by semicolon. message: {user_input}'
+    rec = ask_chatgpt(prompt, messages=[], system=None, new_chat=True, max_tokens=250, temp=0, only_response=True)
+    return [string.strip() for string in rec.split(';')]
+
+
+def get_template_email(user_input, job_posting):
+
+    recruiter_info = get_recruiter_name_email(user_input)
+
+    system = f'Act as a recruiter who is sending interview invitation emails to selected candidates.' \
+             f'Using job posting, create a brief short invitation email for candidate [CANDIDATE] to invite them for an interview.' \
+             f'End subject with **. Only use recruiter name and email.'
+
+    prompt = f'' \
+             f'job posting: {job_posting}' \
+             f'recruiter name: {recruiter_info[0]}' \
+             f'recruiter email: {recruiter_info[1]}'
+
+    return ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=300, temp=0, only_response=True)
+
+
+
+def send_email(candidate_ids, subject, content):
+
+    candidate_names = [st.session_state.candidates_info[int(each_id)][0] for each_id in candidate_ids]
+    candidate_emails = [st.session_state.candidates_info[int(each_id)][1] for each_id in candidate_ids]
+
+    email_contents = [content.replace('[CANDIDATE]', candidate) for candidate in candidate_names]
+    headers = {'Content-Type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache'}
+
+    for i in range(len(candidate_emails)):
+        destination_email = candidate_emails[i]
+
+        data = {
+            "destination_email": destination_email,
+            "email_content": email_contents[i],
+            "subject": subject}
+
+        response = requests.post(ZAPIER_TRIGGER_URL_EMAIL, data=data, headers=headers)
+
+        if response.status_code == 200:
+            email_result = f'Interview Invitation Successfully Sent to\nCandidate: {candidate_names[i]}\nEmail:{destination_email}\n'
+        else:
+            email_result = f'Failed to send Interview Invitation to\nCandidate: {candidate_names[i]}\nEmail:{destination_email}\n'
+
+        with st.chat_message("assistant"):
+            st.markdown(email_result)
+        st.session_state.messages.append({"role": "assistant", "content": email_result})
 
 
 def answer_resume_question(question, resume_texts, session_state):
