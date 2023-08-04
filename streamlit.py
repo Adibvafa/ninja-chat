@@ -401,6 +401,8 @@ def resume_to_text(resume_list):
 def main():
     uploaded_files = st.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
 
+    if 'is_beginning' not in st.session_state:
+        st.session_state.is_beginning = 0
 
     if uploaded_files:
         st.subheader("Uploaded PDFs:")
@@ -421,11 +423,13 @@ def main():
                 name, email = get_candidate_name_email(resume_text[:RESUME_BEGINNING])
                 st.session_state.candidates_info[i] = [name, email]
                 st.write(f'Name: {name}; Email: {email}\n')
+                st.session_state.is_beginning = 1
 
-        for i, resume_text in enumerate(st.session_state.resume_texts):
-            st.write(f"Resume {i} From:")
-            name, email = st.session_state.candidates_info[i]
-            st.write(f'Name: {name}; Email: {email}\n')
+        if st.session_state.is_beginning == 1:
+            for i, resume_text in enumerate(st.session_state.resume_texts):
+                st.write(f"Resume {i} From:")
+                name, email = st.session_state.candidates_info[i]
+                st.write(f'Name: {name}; Email: {email}\n')
 
 
     st.subheader("Let's Chat!")
