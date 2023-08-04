@@ -105,7 +105,7 @@ def ninja_chat(session_state, user_input):
 
     if session_state.prev_input.strip().upper() == 'I' and not 'template_email' in session_state:
         session_state.template_email = get_template_email(user_input, session_state.job_posting)
-        session_state.subject, session_state.content = [string.strip() for string in template_email.split('**')]
+        session_state.subject, session_state.content = [string.strip() for string in session_state.template_email.split('**')]
         return f'Template Email Generated!\n{session_state.template_email}\n\nNow send me the candidate ids (a number!) separated by comma.'
 
     if session_state.prev_input.strip().upper() == 'I' and 'template_email' in session_state:
@@ -129,12 +129,12 @@ def get_recruiter_name_email(user_input):
         st.markdown(f'Alright. The name is set to {name} and email is set to {email}')
     st.session_state.messages.append({"role": "assistant", "content": f'Alright. The name is set to {name} and email is set to {email}'})
 
-    return [name, email]
+    return name, email
 
 
 def get_template_email(user_input, job_posting):
 
-    recruiter_info = get_recruiter_name_email(user_input)
+    name, email = get_recruiter_name_email(user_input)
 
     system = f'Act as a recruiter who is sending interview invitation emails to selected candidates.' \
              f'Using job posting, create a brief short invitation email for candidate [CANDIDATE] to invite them for an interview.' \
@@ -142,8 +142,8 @@ def get_template_email(user_input, job_posting):
 
     prompt = f'' \
              f'job posting: {job_posting}' \
-             f'recruiter name: {recruiter_info[0]}' \
-             f'recruiter email: {recruiter_info[1]}'
+             f'recruiter name: {name}' \
+             f'recruiter email: {email}'
 
     return ask_chatgpt(prompt, messages=[], system=system, new_chat=True, max_tokens=300, temp=0, only_response=True)
 
