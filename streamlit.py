@@ -324,13 +324,13 @@ def token_counter(messages):
     num_tokens += 2
     return num_tokens
 
-def polish_messages(messages):
+def polish_messages(prompt, messages):
 
-    conv_history_tokens = token_counter(messages)
+    conv_history_tokens = token_counter(messages) + token_counter(prompt)
 
     while conv_history_tokens >= 4096:
         del messages[1]
-        conv_history_tokens = token_counter(messages)
+        conv_history_tokens = token_counter(messages) + token_counter(prompt)
 
     return messages
 
@@ -349,7 +349,7 @@ def ask_head_recruiter(question, recruiters_guide, recruiters_response, session_
         prompt += f'\nrecruiter{i} analyzing candidates {candidates}: {recruiters_response[i]}'
     prompt += f'\ncommittee head:'
 
-    session_state.gpt_messages = polish_messages(session_state.gpt_messages)
+    session_state.gpt_messages = polish_messages(prompt, session_state.gpt_messages)
 
     response, session_state.gpt_messages = ask_chatgpt(prompt, messages=session_state.gpt_messages, system=None, new_chat=False, temp=HEAD_TEMP, max_tokens=RECRUITER_HEAD_MAX_TOKENS, only_response=False)
     del session_state.gpt_messages[-1]
