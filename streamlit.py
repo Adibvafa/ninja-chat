@@ -5,15 +5,15 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 ZAPIER_TRIGGER_URL_CAL = f'https://hooks.zapier.com/hooks/catch/16135920/31nzjsx/'
 ZAPIER_TRIGGER_URL_EMAIL = f'https://hooks.zapier.com/hooks/catch/16135920/31nuizf/'
-JOB_POSTING_MAX_TOKENS = 500
-RECRUITER_HEAD_MAX_TOKENS = 1000
-RECRUITER_MAX_TOKENS = 500
-ASSISTANT_SUMMARY_MAX_TOKENS = 350
+JOB_POSTING_MAX_TOKENS = 400
+RECRUITER_HEAD_MAX_TOKENS = 1500
+RECRUITER_MAX_TOKENS = 450
+ASSISTANT_SUMMARY_MAX_TOKENS = 300
 RESUME_BEGINNING = 250
-USER_SUMMARY_MAX_TOKENS = 150
+USER_SUMMARY_MAX_TOKENS = 100
 RECRUITER_TEMP = 0.1
 HEAD_TEMP = 0.1
-HEAD_RECRUITER_SYSTEM = f'Act as a the intelligent head of a committee of professional recruiters trying to answer question. Candidates resumes where split into small groups and each recruiter has only analyzed few resumes. Summarize relevant information from each recruiter with honesty and act as a professional recruiter with great understanding and intelligence to answer question. Refer to each candidate by their number and name.'
+HEAD_RECRUITER_SYSTEM = f'Act as the intelligent head of a committee of professional recruiters trying to answer question. Candidates resumes where split into small groups and each recruiter has only analyzed few resumes. Summarize relevant information from each recruiter with honesty and act as a professional recruiter with great understanding and intelligence to answer question. Refer to each candidate by their number and name.'
 PROMPT_USER_FOR_LETTER = """Please choose one of the following options:\n1. To ask a question, type 'Q'\n2. To send interview invite to chosen candidates, type 'I'\n3. To send calendar invitation, type 'C'\n4. To enter a job posting, type 'J'"""
 
 
