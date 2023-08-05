@@ -326,11 +326,14 @@ def token_counter(messages):
 
 def polish_messages(prompt, messages):
 
-    conv_history_tokens = token_counter(messages) + token_counter(prompt)
+    encoding = tiktoken.get_encoding("cl100k_base")
+    prompt_len = len(encoding.encode(prompt))
 
-    while conv_history_tokens >= 4096:
+    conv_history_tokens = token_counter(messages) + prompt_len
+
+    while conv_history_tokens >= 4050:
         del messages[1]
-        conv_history_tokens = token_counter(messages) + token_counter(prompt)
+        conv_history_tokens = token_counter(messages) + prompt_len
 
     return messages
 
